@@ -1,77 +1,59 @@
+
 import streamlit as st
-import requests
 import pubchempy as pcp
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen, Draw
 
-st.title("🧪 Παγκόσμιος Υπολογιστής & Έλεγχος Lipinski")
-st.write("Αναζητήστε **οποιοδήποτε** μόριο παγκοσμίως με δυναμική αναζήτηση στη βάση δεδομένων του PubChem.")
+st.title("🧪 Υπολογιστής & Έλεγχος Κανόνων Lipinski")
+st.write("Εισάγετε το **όνομα της ένωσης** (π.χ. *Aspirin*, *Ibuprofen*, *Caffeine*, *Paracetamol*) για να δείτε αυτόματα τη δομή και τις ιδιότητές της.")
 
-# Πεδίο ελεύθερης πληκτρολόγησης
-search_query = st.text_input("Πληκτρολογήστε όνομα μορίου (π.χ. caffeine, aspirin, paracetamol...):", "")
+# Πεδίο κειμένου για το όνομα
+compound_name = st.text_input("Όνομα Ένωσης:", "Aspirin")
 
-# Αν ο χρήστης έχει πληκτρολογήσει τουλάχιστον 2 γράμματα, ζητάμε προτάσεις από το PubChem
-suggestions = []
-if search_query and len(search_query) >= 2:
-    try:
-        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{search_query}/json"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            # Το PubChem επιστρέφει τα αποτελέσματα στο κλειδί 'dictionary_terms' -> 'compound'
-            suggestions = data.get("dictionary_terms", {}).get("compound", [])
-    except Exception:
-        suggestions = []
+if compound_name:
+    with st.spinner("Αναζήτηση στη βάση δεδομένων PubChem..."):
+        try:
+            # Αναζήτηση SMILES βάσει ονόματος μέσω PubChem
+            compounds = pcp.get_compounds(compound_name, 'name')
+            if compounds:
+                smiles_input = compounds[0].canonical_smiles
+            else:
+                smiles_input = None
+        except Exception as e:
+            smiles_input = None
 
-# Αν βρέθηκαν προτάσεις, τις δείχνουμε σε έναν επιλογέα
-selected_molecule = search_query
-if suggestions:
-    st.caption(f"Βρέθηκαν {len(suggestions)} πιθανές προτάσεις από το PubChem:")
-    selected_molecule = st.selectbox("Επιλέξτε από τις προτάσεις:", options=suggestions, index=0)
-
-# Κουμπί ή αυτόματη εκτέλεση αν υπάρχει επιλεγμένο μόριο
-if selected_molecule:
-    st.info(f"Ανάλυση για: **{selected_molecule}**")
-    
-    try:
-        # Αναζήτηση και φόρτωση μορίου από PubChem
-        compound = pcp.get_compounds(selected_molecule, 'name')[0]
-        smiles = compound.canonical_smiles
-        st.success(f"Βρέθηκε SMILES: `{smiles}`")
+    if not smiles_input:
+        st.error(f"❌ Δεν βρέθηκε η ένωση '{compound_name}' στο PubChem. Δοκιμάστε άλλο όνομα (στα αγγλικά).")
+    else:
+        st.success(f"✅ Βρέθηκε! (SMILES: `{smiles_input}`)")
         
-        # RDKit Υπολογισμοί
-        mol = Chem.MolFromSmiles(smiles)
-        mw = Descriptors.MolWt(mol)
-        logp = Crippen.MolLogP(mol)
-        h_donors = Descriptors.NumHDonors(mol)
-        h_acceptors = Descriptors.NumHAcceptors(mol)
+        mol = Chem.MolFromSmiles(smiles_input)
         
-        # Εμφάνιση ιδιοτήτων σε στήλες
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Μοριακό Βάρος (MW)", f"{mw:.2f} g/mol")
-            st.metric("H-Donors", h_donors)
-        with col2:
-            st.metric("LogP", f"{logp:.2f}")
-            st.metric("H-Acceptors", h_acceptors)
-            
-        # Έλεγχος Lipinski (Rule of 5)
-        violations = 0
-        if mw > 500: violations += 1
-        if logp > 5: violations += 1
-        if h_donors > 5: violations += 1
-        if h_acceptors > 10: violations += 1
-        
-        st.subheader("📋 Αποτελέσματα Lipinski Rule of 5")
-        if violations == 0:
-            st.success("✅ Εξαιρετική συμμόρφωση (0 παραβιάσεις). Κατάλληλο για από του στόματος χορήγηση!")
+        if mol is None:
+            st.error("❌ Σφάλμα κατά τη δημιουργία του μορίου.")
         else:
-            st.warning(f"⚠️ Εντοπίστηκαν **{violations}** παραβιάσεις των κανόνων του Lipinski.")
+            # Εμφάνιση εικόνας μορίου
+            st.subheader("Μοριακή Δομή")
+            img = Draw.MolToImage(mol, size=(300, 300))
+            st.image(img)
             
-        # Σχεδίαση μορίου
-        st.subheader("Molecule Structure")
-        img = Draw.MolToImage(mol, size=(300, 300))
-        st.image(img)
-        
-    except Exception as e:
-        st.error("⚠️ Δεν ήταν δυνατή η φόρτωση του μορίου. Ελέγξτε την ονομασία.")
+            # Υπολογισμοί
+            mw = Descriptors.MolWt(mol)
+            logp = Crippen.MolLogP(mol)
+            hbd = Descriptors.NumHDonors(mol)
+            hba = Descriptors.NumHAcceptors(mol)
+            
+            # Εμφάνιση ιδιοτήτων
+            st.subheader("Φυσικοχημικές Ιδιότητες")
+            c1, c2 = st.columns(2)
+            c1.metric("Μοριακό Βάρος (MW)", f"{mw:.2f} g/mol")
+            c1.metric("LogP", f"{logp:.2f}")
+            c2.metric("Δότες H (HBD)", hbd)
+            c2.metric("Δέκτες H (HBA)", hba)
+            
+            # Αξιολόγηση Lipinski
+            st.subheader("Αξιολόγηση Lipinski (Rule of 5)")
+            if mw <= 500 and logp <= 5 and hbd <= 5 and hba <= 10:
+                st.markdown("🟢 **Το μόριο ικανοποιεί πλήρως τον κανόνα του Lipinski!**")
+            else:
+                st.markdown("🔴 **Το μόριο παραβιάζει κάποια από τις προϋποθέσεις του Lipinski.**")
