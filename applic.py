@@ -1,4 +1,4 @@
-%%writefile app.py
+
 import streamlit as st
 import pubchempy as pcp
 from rdkit import Chem
