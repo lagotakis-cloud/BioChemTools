@@ -14,16 +14,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Custom CSS για να "κρύψουμε" την αίσθηση του απλού Streamlit
+# 2. Custom CSS για επαγγελματικό SaaS UI
 custom_css = """
 <style>
-    /* Γενικό Background & Φόντο */
     .stApp {
         background-color: #0f172a;
         color: #f8fafc;
     }
-    
-    /* Custom Header Styling */
     .brand-header {
         background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
         padding: 24px;
@@ -43,8 +40,6 @@ custom_css = """
         font-size: 1.0rem;
         margin-top: 5px;
     }
-
-    /* Cards για εμφάνιση ιδιοτήτων */
     .stat-card {
         background-color: #1e293b;
         border: 1px solid #334155;
@@ -65,8 +60,6 @@ custom_css = """
         font-weight: 700;
         margin-top: 5px;
     }
-
-    /* Μορφοποίηση Πινάκων */
     div[data-testid="stDataFrame"] {
         border: 1px solid #334155;
         border-radius: 8px;
@@ -113,19 +106,15 @@ if molecule_input:
             st.error("⚠️ Invalid chemical structure. Please check your SMILES input.")
         else:
             exact_mass = Descriptors.ExactMolWt(mol)
-            mw = Descriptors.MolWt(mol)
             
             # Layout σε 2 Στήλες
             col_left, col_right = st.columns([1, 2], gap="large")
             
             with col_left:
                 st.markdown("#### 🧪 Structure & Properties")
-                
-                # Εικόνα μορίου με dark background styling
                 img = Draw.MolToImage(mol, size=(320, 320))
                 st.image(img, use_container_width=True)
                 
-                # Custom HTML Cards αντί για st.metric
                 st.markdown(f"""
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
                     <div class="stat-card">
@@ -142,7 +131,7 @@ if molecule_input:
                 st.caption(f"**SMILES:** `{smiles}`")
 
             with col_right:
-                st.markdown("#### 📊 Adduct Ion Calculator")
+                st.markdown("#### 📊 Adduct Ion Calculator & Spectrum")
                 
                 # Σταθερές Μαζών
                 mass_h = 1.007825
@@ -176,59 +165,46 @@ if molecule_input:
                 df_neg = pd.DataFrame(neg_adducts)
                 df_neg["m/z"] = df_neg["m/z"].round(precision)
 
-                # Αντικατάσταση Tabs με 3 επιλογές (συμπεριλαμβανομένου του Spectrum)
-        tab1, tab2, tab3 = st.tabs(["➕ Positive Mode ([M+H]+)", "➖ Negative Mode ([M-H]-)", "📊 Predicted MS Spectrum"])
-        
-        with tab1:
-            st.dataframe(df_pos, use_container_width=True, hide_index=True)
-        with tab2:
-            st.dataframe(df_neg, use_container_width=True, hide_index=True)
-        
-        with tab3:
-            st.markdown("##### 🔮 Predicted Isotope Pattern for [M+H]+")
-            
-            # Υπολογισμός m/z για το M+H
-            mz_mh = exact_mass + mass_h
-            
-            # Δημιουργία ενός *απλοποιημένου* φάσματος (M, M+1, M+2)
-            # (Αργότερα μπορούμε να το κάνουμε ακριβές με βάση τον χημικό τύπο)
-            isotope_data = {
-                "mz": [mz_mh, mz_mh + 1.003, mz_mh + 2.004],
-                "intensity": [100.0, 11.2, 1.5] # Πρόχειρα ποσοστά (π.χ. για καφεΐνη)
-            }
-            
-            # Δημιουργία του γραφήματος με Plotly
-            fig = go.Figure()
-            
-            # Προσθήκη των κορυφών (sticks)
-            for mz, int in zip(isotope_data["mz"], isotope_data["intensity"]):
-                fig.add_trace(go.Scatter(
-                    x=[mz, mz], y=[0, int],
-                    mode='lines',
-                    line=dict(color='#38bdf8', width=2),
-                    showlegend=False
-                ))
-
-            # Ρυθμίσεις εμφάνισης γραφήματος (Dark Mode)
-            fig.update_layout(
-                title=f"[M+H]+ Monoisotopic Peak at {mz_mh:.4f}",
-                xaxis_title="m/z",
-                yaxis_title="Relative Intensity (%)",
-                template="plotly_dark",
-                paper_bgcolor="#1e293b",
-                plot_bgcolor="#1e293b",
-                height=300,
-                margin=dict(l=20, r=20, t=40, b=20),
-            )
-            
-            # Εμφάνιση του γραφήματος στο Streamlit
-            st.plotly_chart(fig, use_container_width=True)
+                # Tabs για Positive, Negative και Spectrum
+                tab1, tab2, tab3 = st.tabs(["➕ Positive Mode ([M+H]+)", "➖ Negative Mode ([M-H]-)", "📊 Predicted MS Spectrum"])
                 
-                # 4. Feature Πώλησης / Export Data
+                with tab1:
+                    st.dataframe(df_pos, use_container_width=True, hide_index=True)
+                with tab2:
+                    st.dataframe(df_neg, use_container_width=True, hide_index=True)
+                with tab3:
+                    st.markdown("##### 🔮 Predicted Isotope Pattern for [M+H]+")
+                    mz_mh = exact_mass + mass_h
+                    
+                    isotope_data = {
+                        "mz": [mz_mh, mz_mh + 1.003, mz_mh + 2.004],
+                        "intensity": [100.0, 11.2, 1.5]
+                    }
+                    
+                    fig = go.Figure()
+                    for mz, int_val in zip(isotope_data["mz"], isotope_data["intensity"]):
+                        fig.add_trace(go.Scatter(
+                            x=[mz, mz], y=[0, int_val],
+                            mode='lines',
+                            line=dict(color='#38bdf8', width=2),
+                            showlegend=False
+                        ))
+
+                    fig.update_layout(
+                        title=f"[M+H]+ Monoisotopic Peak at {mz_mh:.4f}",
+                        xaxis_title="m/z",
+                        yaxis_title="Relative Intensity (%)",
+                        template="plotly_dark",
+                        paper_bgcolor="#1e293b",
+                        plot_bgcolor="#1e293b",
+                        height=300,
+                        margin=dict(l=20, r=20, t=40, b=20),
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
                 st.markdown("---")
                 col_exp1, col_exp2 = st.columns(2)
                 
-                # Δημιουργία CSV για κατέβασμα
                 df_all = pd.concat([df_pos.assign(Mode='Positive'), df_neg.assign(Mode='Negative')])
                 csv_buffer = io.StringIO()
                 df_all.to_csv(csv_buffer, index=False)
