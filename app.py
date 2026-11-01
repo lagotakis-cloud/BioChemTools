@@ -4,7 +4,7 @@ import pubchempy as pcp
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen, Draw
 
-st.title("🧪 Υπολογιστής & Έλεγχος Κανόνων Lipinski")
+st.title("Έλεγχος Κανόνων Lipinski")
 st.write("Εισάγετε το **όνομα της ένωσης** (π.χ. *Aspirin*, *Ibuprofen*, *Caffeine*, *Paracetamol*) για να δείτε αυτόματα τη δομή και τις ιδιότητές της.")
 
 # Πεδίο κειμένου για το όνομα
@@ -48,12 +48,12 @@ if compound_name:
             c1, c2 = st.columns(2)
             c1.metric("Μοριακό Βάρος (MW)", f"{mw:.2f} g/mol")
             c1.metric("LogP", f"{logp:.2f}")
-            c2.metric("Δότες H (HBD)", hbd)
-            c2.metric("Δέκτες H (HBA)", hba)
+            c2.metric("Δότες δεσμών H (HBD)", hbd)
+            c2.metric("Δέκτες δεσμών H (HBA)", hba)
             
             # Αξιολόγηση Lipinski
             st.subheader("Αξιολόγηση Lipinski (Rule of 5)")
             if mw <= 500 and logp <= 5 and hbd <= 5 and hba <= 10:
-                st.markdown("🟢 **Το μόριο ικανοποιεί πλήρως τον κανόνα του Lipinski!**")
+                st.markdown("🟢 **Το μόριο ικανοποιεί πλήρως τους κανόνες του Lipinski!**")
             else:
-                st.markdown("🔴 **Το μόριο παραβιάζει κάποια από τις προϋποθέσεις του Lipinski.**")
+                st.markdown("🔴 **Το μόριο παραβιάζει κάποιον/ους από τους κανόνες του Lipinski.**")
