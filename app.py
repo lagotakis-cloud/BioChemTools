@@ -4,6 +4,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors, Draw
 import pandas as pd
 import io
+import plotly.graph_objects as go
 
 # 1. Ρύθμιση Σελίδας
 st.set_page_config(
@@ -175,12 +176,53 @@ if molecule_input:
                 df_neg = pd.DataFrame(neg_adducts)
                 df_neg["m/z"] = df_neg["m/z"].round(precision)
 
-                tab1, tab2 = st.tabs(["➕ Positive Mode ([M+H]+)", "➖ Negative Mode ([M-H]-)"])
-                
-                with tab1:
-                    st.dataframe(df_pos, use_container_width=True, hide_index=True)
-                with tab2:
-                    st.dataframe(df_neg, use_container_width=True, hide_index=True)
+                # Αντικατάσταση Tabs με 3 επιλογές (συμπεριλαμβανομένου του Spectrum)
+        tab1, tab2, tab3 = st.tabs(["➕ Positive Mode ([M+H]+)", "➖ Negative Mode ([M-H]-)", "📊 Predicted MS Spectrum"])
+        
+        with tab1:
+            st.dataframe(df_pos, use_container_width=True, hide_index=True)
+        with tab2:
+            st.dataframe(df_neg, use_container_width=True, hide_index=True)
+        
+        with tab3:
+            st.markdown("##### 🔮 Predicted Isotope Pattern for [M+H]+")
+            
+            # Υπολογισμός m/z για το M+H
+            mz_mh = exact_mass + mass_h
+            
+            # Δημιουργία ενός *απλοποιημένου* φάσματος (M, M+1, M+2)
+            # (Αργότερα μπορούμε να το κάνουμε ακριβές με βάση τον χημικό τύπο)
+            isotope_data = {
+                "mz": [mz_mh, mz_mh + 1.003, mz_mh + 2.004],
+                "intensity": [100.0, 11.2, 1.5] # Πρόχειρα ποσοστά (π.χ. για καφεΐνη)
+            }
+            
+            # Δημιουργία του γραφήματος με Plotly
+            fig = go.Figure()
+            
+            # Προσθήκη των κορυφών (sticks)
+            for mz, int in zip(isotope_data["mz"], isotope_data["intensity"]):
+                fig.add_trace(go.Scatter(
+                    x=[mz, mz], y=[0, int],
+                    mode='lines',
+                    line=dict(color='#38bdf8', width=2),
+                    showlegend=False
+                ))
+
+            # Ρυθμίσεις εμφάνισης γραφήματος (Dark Mode)
+            fig.update_layout(
+                title=f"[M+H]+ Monoisotopic Peak at {mz_mh:.4f}",
+                xaxis_title="m/z",
+                yaxis_title="Relative Intensity (%)",
+                template="plotly_dark",
+                paper_bgcolor="#1e293b",
+                plot_bgcolor="#1e293b",
+                height=300,
+                margin=dict(l=20, r=20, t=40, b=20),
+            )
+            
+            # Εμφάνιση του γραφήματος στο Streamlit
+            st.plotly_chart(fig, use_container_width=True)
                 
                 # 4. Feature Πώλησης / Export Data
                 st.markdown("---")
