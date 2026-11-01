@@ -173,43 +173,60 @@ if molecule_input:
                 with tab2:
                     st.dataframe(df_neg, use_container_width=True, hide_index=True)
                 with tab3:
-                    st.markdown("##### 🔮 Dynamic Isotope Pattern for [M+H]+")
-                    mz_mh = exact_mass + mass_h
+                    st.markdown("##### 🔮 Authentic Isotope Pattern ([M+H]+)")
                     
-                    # Δυναμικός υπολογισμός ισοτόπων με βάση τα άτομα του RDKit
+                    # 1. Υπολογισμός κατανομής ισοτόπων με convolution των φυσικών αφθονσιών
+                    # Format στοιχείου: { mass_offset: probability }
+                    isotope_profiles = {
+                        'C': {0: 0.9893, 1: 0.0107},
+                        'H': {0: 0.99985, 1: 0.00015},
+                        'N': {0: 0.99632, 1: 0.00368},
+                        'O': {0: 0.99757, 2: 0.00205},
+                        'S': {0: 0.9493, 1: 0.0076, 2: 0.0429},
+                        'Cl': {0: 0.7576, 2: 0.2424},
+                        'Br': {0: 0.749, 2: 0.251} # Κατά προσέγγιση για απλότητα
+                    }
+                    
+                    # Καταμέτρηση ατόμων από το RDKit mol
                     atom_counts = {}
                     for atom in mol.GetAtoms():
                         sym = atom.GetSymbol()
                         atom_counts[sym] = atom_counts.get(sym, 0) + 1
                     
-                    # Βασική εκτίμηση ισοτοπικής κατανομής
-                    # 1. Carbon contribution (κάθε C προσθέτει ~1.1% στο M+1 λόγω C-13)
-                    num_c = atom_counts.get('C', 0)
-                    m1_intensity = num_c * 1.1
+                    # Προσθήκη πρωτονίου για το [M+H]+
+                    atom_counts['H'] = atom_counts.get('H', 0) + 1
                     
-                    # 2. Chlorine / Bromine / Sulfur check για M+2 peaks
-                    num_cl = atom_counts.get('Cl', 0)
-                    num_br = atom_counts.get('Br', 0)
-                    num_s = atom_counts.get('S', 0)
+                    # Υπολογισμός συνολικής κατανομής (Convolution)
+                    # Ξεκινάμε με ένα "ουδέτερο" σημείο (μάζα 0, πιθανότητα 1.0)
+                    distribution = {0: 1.0}
                     
-                    m2_intensity = 0.2 * atom_counts.get('O', 0) + 4.4 * num_s
-                    if num_cl > 0:
-                        m2_intensity += num_cl * 32.0 # Το Cl37 είναι ~32% του Cl35
-                    if num_br > 0:
-                        m2_intensity += num_br * 98.0 # Το Br81 είναι ~98% του Br79
-                        
-                    # Κατασκευή λίστας κορυφών
-                    mz_list = [mz_mh, mz_mh + 1.0034, mz_mh + 2.0067]
-                    int_list = [100.0, max(m1_intensity, 0.5), max(m2_intensity, 0.1)]
-                    
-                    # Αν υπάρχουν περισσότερα ισοτοπικά peaks (π.χ. M+3)
-                    if num_cl > 1 or num_br > 1:
-                        mz_list.append(mz_mh + 3.01)
-                        int_list.append(m2_intensity * 0.3)
+                    for elem, count in atom_counts.items():
+                        if elem in isotope_profiles:
+                            profile = isotope_profiles[elem]
+                            for _ in range(count):
+                                new_dist = {}
+                                for m1, p1 in distribution.items():
+                                    for m2, p2 in profile.items():
+                                        m_tot = m1 + m2
+                                        new_dist[m_tot] = new_dist.get(m_tot, 0.0) + (p1 * p2)
+                                distribution = new_dist
 
-                    # Δημιουργία γραφήματος με Plotly
+                    # Εύρεση της μέγιστης κορυφής για κανονικοποίηση στο 100%
+                    max_prob = max(distribution.values()) if distribution else 1.0
+                    
+                    base_nominal_mass = int(exact_mass + mass_h)
+                    mz_peaks = []
+                    int_peaks = []
+                    
+                    for offset, prob in sorted(distribution.items()):
+                        # Κρατάμε τα σημαντικά peaks κοντά στο μοριακό βάρος
+                        if (prob / max_prob) > 0.001:  # Φιλτράρισμα θορύβου < 0.1%
+                            mz_peaks.append(base_nominal_mass + offset + (exact_mass + mass_h - int(exact_mass + mass_h)))
+                            int_peaks.append((prob / max_prob) * 100.0)
+
+                    # Δημιουργία γραφήματος Plotly
                     fig = go.Figure()
-                    for mz_val, int_val in zip(mz_list, int_list):
+                    for mz_val, int_val in zip(mz_peaks, int_peaks):
                         fig.add_trace(go.Scatter(
                             x=[mz_val, mz_val], y=[0, int_val],
                             mode='lines',
@@ -218,9 +235,9 @@ if molecule_input:
                         ))
 
                     fig.update_layout(
-                        title=f"Calculated Isotope Envelope for {compound_name} ([M+H]+)",
+                        title=f"High-Resolution Isotope Envelope for {compound_name} ([M+H]+)",
                         xaxis_title="m/z",
-                        yaxis_title="Relative Intensity (%)",
+                        yaxis_title="Relative Abundance (%)",
                         template="plotly_dark",
                         paper_bgcolor="#1e293b",
                         plot_bgcolor="#1e293b",
@@ -228,33 +245,7 @@ if molecule_input:
                         margin=dict(l=20, r=20, t=40, b=20),
                     )
                     st.plotly_chart(fig, use_container_width=True)
-                    st.caption("ℹ️ Το φάσμα υπολογίζεται δυναμционно από τη στοιχειομετρική σύσταση του μορίου (RDKit atom parsing).")
-                    
-                    isotope_data = {
-                        "mz": [mz_mh, mz_mh + 1.003, mz_mh + 2.004],
-                        "intensity": [100.0, 11.2, 1.5]
-                    }
-                    
-                    fig = go.Figure()
-                    for mz, int_val in zip(isotope_data["mz"], isotope_data["intensity"]):
-                        fig.add_trace(go.Scatter(
-                            x=[mz, mz], y=[0, int_val],
-                            mode='lines',
-                            line=dict(color='#38bdf8', width=2),
-                            showlegend=False
-                        ))
-
-                    fig.update_layout(
-                        title=f"[M+H]+ Monoisotopic Peak at {mz_mh:.4f}",
-                        xaxis_title="m/z",
-                        yaxis_title="Relative Intensity (%)",
-                        template="plotly_dark",
-                        paper_bgcolor="#1e293b",
-                        plot_bgcolor="#1e293b",
-                        height=300,
-                        margin=dict(l=20, r=20, t=40, b=20),
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("🔬 Ακριβής υπολογισμός ισοτοπικής κατανομής μέσω πολυώνυμης σύναψης (Convolution) φυσικών αφθονσιών.")
 
                 st.markdown("---")
                 col_exp1, col_exp2 = st.columns(2)
