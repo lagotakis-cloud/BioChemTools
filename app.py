@@ -3,58 +3,147 @@ import pubchempy as pcp
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Draw
 import pandas as pd
+import io
 
-# Ρύθμιση σελίδας
-st.set_page_config(page_title="LC-MS Adduct & Mass Pro", page_icon="🧪", layout="wide")
+# 1. Ρύθμιση Σελίδας
+st.set_page_config(
+    page_title="SpectraMass Pro | LC-MS Analytical Suite", 
+    page_icon="🔬", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-st.title("🧪 LC-MS Adduct & Mass Pro")
-st.markdown("Επαγγελματικό εργαλείο ταυτοποίησης φασματοσκοπίας μάζας για αναλυτικούς χημικούς.")
+# 2. Custom CSS για να "κρύψουμε" την αίσθηση του απλού Streamlit
+custom_css = """
+<style>
+    /* Γενικό Background & Φόντο */
+    .stApp {
+        background-color: #0f172a;
+        color: #f8fafc;
+    }
+    
+    /* Custom Header Styling */
+    .brand-header {
+        background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+        padding: 24px;
+        border-radius: 12px;
+        border-bottom: 2px solid #3b82f6;
+        margin-bottom: 25px;
+    }
+    .brand-title {
+        color: #60a5fa;
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 2.2rem;
+        margin: 0;
+    }
+    .brand-subtitle {
+        color: #94a3b8;
+        font-size: 1.0rem;
+        margin-top: 5px;
+    }
 
-# Πλαϊνή μπάρα (Sidebar) για επιλογές
-st.sidebar.header("⚙️ Ρυθμίσεις Αναζήτησης")
-input_type = st.sidebar.radio("Τρόπος Εισόδου:", ["Όνομα Μορίου (π.χ. Caffeine)", "SMILES String"])
+    /* Cards για εμφάνιση ιδιοτήτων */
+    .stat-card {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+    .stat-label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .stat-value {
+        color: #38bdf8;
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-top: 5px;
+    }
 
-molecule_input = ""
-if input_type == "Όνομα Μορίου (π.χ. Caffeine)":
-    molecule_input = st.sidebar.text_input("Εισάγετε όνομα:", "Caffeine")
+    /* Μορφοποίηση Πινάκων */
+    div[data-testid="stDataFrame"] {
+        border: 1px solid #334155;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+</style>
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
+
+# Header της Εφαρμογής
+st.markdown("""
+<div class="brand-header">
+    <h1 class="brand-title">🔬 SpectraMass Pro</h1>
+    <p class="brand-subtitle">High-Precision LC-MS Adduct Calculator & Isotopic Mass Suite</p>
+</div>
+""", unsafe_allow_html=True)
+
+# 3. Sidebar (Εργαλειοθήκη)
+st.sidebar.markdown("### 🎛️ Control Panel")
+input_type = st.sidebar.radio("Input Method:", ["Molecule Name", "SMILES Sequence"])
+
+if input_type == "Molecule Name":
+    molecule_input = st.sidebar.text_input("Chemical Name:", "Caffeine")
 else:
-    molecule_input = st.sidebar.text_input("Εισάγετε SMILES:", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C")
+    molecule_input = st.sidebar.text_input("SMILES String:", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C")
+
+precision = st.sidebar.slider("m/z Decimal Precision:", min_value=2, max_value=6, value=4)
 
 if molecule_input:
     try:
-        # Εύρεση SMILES και δεδομένων από PubChem αν δόθηκε όνομα
-        if input_type == "Όνομα Μορίου (π.χ. Caffeine)":
+        if input_type == "Molecule Name":
             compound = pcp.get_compounds(molecule_input, 'name')[0]
             smiles = compound.canonical_smiles
-            compound_name = molecule_input
+            compound_name = molecule_input.capitalize()
+            formula = compound.molecular_formula
         else:
             smiles = molecule_input
-            compound_name = "Custom Molecule"
+            compound_name = "User Structure"
+            formula = "N/A"
 
-        # Δημιουργία μορίου RDKit
         mol = Chem.MolFromSmiles(smiles)
         
         if mol is None:
-            st.error("⚠️ Μη έγκυρη δομή μορίου. Ελέγξτε την είσοδο.")
+            st.error("⚠️ Invalid chemical structure. Please check your SMILES input.")
         else:
-            # Υπολογισμός Μονοϊσοτοπικής Μάζας (Exact Mass / Monoisotopic Mass)
             exact_mass = Descriptors.ExactMolWt(mol)
+            mw = Descriptors.MolWt(mol)
             
-            # Κεντρικό Layout
-            col1, col2 = st.columns([1, 2])
+            # Layout σε 2 Στήλες
+            col_left, col_right = st.columns([1, 2], gap="large")
             
-            with col1:
-                st.subheader("🧬 Δομή & Βασικές Ιδιότητες")
-                st.image(Draw.MolToImage(mol, size=(250, 250)), caption=compound_name)
-                st.metric("Exact Monoisotopic Mass", f"{exact_mass:.4f} Da")
-                st.metric("Canonical SMILES", smiles)
-
-            with col2:
-                st.subheader("📊 Πίνακας LC-MS Adducts")
-                st.markdown("Αυτόματος υπολογισμός λόγου μάζας προς φορτίο ($m/z$) για δημοφιλή adducts:")
+            with col_left:
+                st.markdown("#### 🧪 Structure & Properties")
                 
-                # Σταθερές μαζών ιόντων / adducts
-                mass_electron = 0.00054858
+                # Εικόνα μορίου με dark background styling
+                img = Draw.MolToImage(mol, size=(320, 320))
+                st.image(img, use_container_width=True)
+                
+                # Custom HTML Cards αντί για st.metric
+                st.markdown(f"""
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <div class="stat-card">
+                        <div class="stat-label">Monoisotopic Mass</div>
+                        <div class="stat-value">{exact_mass:.{precision}f}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Formula</div>
+                        <div class="stat-value" style="color: #f43f5e;">{formula}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.caption(f"**SMILES:** `{smiles}`")
+
+            with col_right:
+                st.markdown("#### 📊 Adduct Ion Calculator")
+                
+                # Σταθερές Μαζών
                 mass_h = 1.007825
                 mass_na = 22.989218
                 mass_nh4 = 18.034374
@@ -63,32 +152,56 @@ if molecule_input:
                 mass_hcoo = 44.997655
                 mass_ch3coo = 59.013304
 
-                # Υπολογισμός Positive Adducts
+                # Positive Mode
                 pos_adducts = [
-                    {"Adduct": "[M+H]+", "Formula": "M + H", "m/z": exact_mass + mass_h},
-                    {"Adduct": "[M+Na]+", "Formula": "M + Na", "m/z": exact_mass + mass_na},
-                    {"Adduct": "[M+NH4]+", "Formula": "M + NH4", "m/z": exact_mass + mass_nh4},
-                    {"Adduct": "[M+K]+", "Formula": "M + K", "m/z": exact_mass + mass_k},
-                    {"Adduct": "[2M+H]+", "Formula": "2M + H", "m/z": (2 * exact_mass) + mass_h},
+                    {"Adduct": "[M+H]+", "Ion Formula": "M + H", "m/z": exact_mass + mass_h},
+                    {"Adduct": "[M+Na]+", "Ion Formula": "M + Na", "m/z": exact_mass + mass_na},
+                    {"Adduct": "[M+NH4]+", "Ion Formula": "M + NH4", "m/z": exact_mass + mass_nh4},
+                    {"Adduct": "[M+K]+", "Ion Formula": "M + K", "m/z": exact_mass + mass_k},
+                    {"Adduct": "[2M+H]+", "Ion Formula": "2M + H", "m/z": (2 * exact_mass) + mass_h},
                 ]
                 
-                # Υπολογισμός Negative Adducts
+                # Negative Mode
                 neg_adducts = [
-                    {"Adduct": "[M-H]-", "Formula": "M - H", "m/z": exact_mass - mass_h},
-                    {"Adduct": "[M+Cl]-", "Formula": "M + Cl", "m/z": exact_mass + mass_cl},
-                    {"Adduct": "[M+HCOO]-", "Formula": "M + Formate", "m/z": exact_mass + mass_hcoo},
-                    {"Adduct": "[M+CH3COO]-", "Formula": "M + Acetate", "m/z": exact_mass + mass_ch3coo},
+                    {"Adduct": "[M-H]-", "Ion Formula": "M - H", "m/z": exact_mass - mass_h},
+                    {"Adduct": "[M+Cl]-", "Ion Formula": "M + Cl", "m/z": exact_mass + mass_cl},
+                    {"Adduct": "[M+HCOO]-", "Ion Formula": "M + Formate", "m/z": exact_mass + mass_hcoo},
+                    {"Adduct": "[M+CH3COO]-", "Ion Formula": "M + Acetate", "m/z": exact_mass + mass_ch3coo},
                 ]
 
-                st.markdown("##### ➕ Positive Ionization Mode")
                 df_pos = pd.DataFrame(pos_adducts)
-                df_pos["m/z"] = df_pos["m/z"].round(4)
-                st.dataframe(df_pos, use_container_width=True, hide_index=True)
-
-                st.markdown("##### ➖ Negative Ionization Mode")
+                df_pos["m/z"] = df_pos["m/z"].round(precision)
+                
                 df_neg = pd.DataFrame(neg_adducts)
-                df_neg["m/z"] = df_neg["m/z"].round(4)
-                st.dataframe(df_neg, use_container_width=True, hide_index=True)
+                df_neg["m/z"] = df_neg["m/z"].round(precision)
+
+                tab1, tab2 = st.tabs(["➕ Positive Mode ([M+H]+)", "➖ Negative Mode ([M-H]-)"])
+                
+                with tab1:
+                    st.dataframe(df_pos, use_container_width=True, hide_index=True)
+                with tab2:
+                    st.dataframe(df_neg, use_container_width=True, hide_index=True)
+                
+                # 4. Feature Πώλησης / Export Data
+                st.markdown("---")
+                col_exp1, col_exp2 = st.columns(2)
+                
+                # Δημιουργία CSV για κατέβασμα
+                df_all = pd.concat([df_pos.assign(Mode='Positive'), df_neg.assign(Mode='Negative')])
+                csv_buffer = io.StringIO()
+                df_all.to_csv(csv_buffer, index=False)
+                
+                with col_exp1:
+                    st.download_button(
+                        label="📥 Export Results (CSV)",
+                        data=csv_buffer.getvalue(),
+                        file_name=f"{compound_name}_adducts.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
+                with col_exp2:
+                    if st.button("🔒 Batch Processing (Pro)", use_container_width=True):
+                        st.info("💡 Batch CSV analysis is available in the Pro Version.")
 
     except Exception as e:
-        st.error(f"⚠️ Δεν βρέθηκε το μόριο ή προέκυψε σφάλμα: {e}")
+        st.error(f"⚠️ Could not resolve structure: {e}")
