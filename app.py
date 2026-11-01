@@ -25,7 +25,7 @@ molecule_database = [
 
 # Το st.selectbox λειτουργεί αυτόματα ως autocomplete καθώς ο χρήστης πληκτρολογεί
 selected_molecule = st.selectbox(
-    "Πληκτρολογήστε ή επιλέξτε μόριο (π.χ. c, ca...):",
+    "Πληκτρολογήστε ή επιλέξτε μόριο:",
     options=[""] + sorted(molecule_database),
     index=0
 )
