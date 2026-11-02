@@ -56,11 +56,12 @@ input_option = st.radio("Επιλογή:", ("Δοκιμή με έτοιμα ον
 names_list = []
 
 if input_option == "Δοκιμή με έτοιμα ονόματα":
-    names_list = ["Aspirin", "Paracetamol", "Caffeine", "Ibuprofen", "Omeprazole"]
+    # Εδώ αλλάξαμε τη λίστα: προσθέσαμε Cyclosporin A και Vancomycin
+    names_list = ["Aspirin", "Cyclosporin A", "Ibuprofen", "Vancomycin", "Omeprazole"]
     st.write("Δοκιμαστική λίστα:", ", ".join(names_list))
 else:
     user_input = st.text_area("Γράψτε τα ονόματα (ένα ανά γραμμή):", 
-                              value="Aspirin\nParacetamol\nCaffeine")
+                              value="Aspirin\nCyclosporin A\nVancomycin")
     names_list = [name.strip() for name in user_input.split("\n") if name.strip()]
 
 # --- 3. ΥΠΟΛΟΓΙΣΜΟΣ ΚΑΝΟΝΩΝ ---
@@ -98,7 +99,7 @@ if st.button("Αναζήτηση & Υπολογισμός"):
             
             results.append({
                 "Name": name,
-                "SMILES": smi, # Το κρατάμε στα δεδομένα για να το έχουμε αν χρειαστεί, αλλά θα το κρύψουμε από τον πίνακα
+                "SMILES": smi,
                 "MW": round(mw, 2),
                 "LogP": round(logp, 2),
                 "HBD": hbd,
@@ -116,13 +117,9 @@ if st.button("Αναζήτηση & Υπολογισμός"):
             
             st.subheader("📊 Αποτελέσματα Ανάλυσης")
             
-            # Αφαιρούμε το SMILES και το Molecule από τον πίνακα προβολής
             df_display = df_results.drop(columns=["SMILES", "Molecule"])
-            
-            # Εφαρμογή του styling στον πίνακα
             styled_df = df_display.style.apply(highlight_lipinski, axis=1)
             
-            # Εμφάνιση του μορφοποιημένου πίνακα στο Streamlit
             st.dataframe(styled_df, use_container_width=True)
             
             st.subheader("🔬 2D Δομές Μορίων")
