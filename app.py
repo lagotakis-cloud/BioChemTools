@@ -1,19 +1,18 @@
 import streamlit as st
 import pandas as pd
-import requests
+import pubchempy as pcp  # Χρησιμοποιούμε την επίσημη βιβλιοθήκη του PubChem
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen
 from rdkit.Chem import Draw
 
-# --- ΣΥΝΑΡΤΗΣΗ: Αναζήτηση SMILES από όνομα μέσω PubChem API ---
+# --- ΣΥΝΑΡΤΗΣΗ: Αναζήτηση SMILES από όνομα μέσω PubChemPy ---
 def get_smiles_from_pubchem(compound_name):
-    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{compound_name.strip()}/property/CanonicalSMILES/JSON"
     try:
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            smiles = data["PropertyTable"]["Properties"][0]["CanonicalSMILES"]
-            return smiles
+        # Αναζήτηση της ένωσης με βάση το όνομα
+        compounds = pcp.get_compounds(compound_name.strip(), 'name')
+        if compounds:
+            # Επιστρέφουμε το Canonical SMILES του πρώτου αποτελέσματος
+            return compounds[0].canonical_smiles
         else:
             return None
     except Exception as e:
