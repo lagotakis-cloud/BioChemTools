@@ -71,21 +71,28 @@ LANG = {
 
 t = LANG[st.session_state.lang]
 
-# --- 3. ΕΠΙΚΕΦΑΛΙΔΑ & ΚΟΥΜΠΙΑ ΣΗΜΑΙΩΝ ΣΤΟ ΠΑΝΩ ΜΕΡΟΣ ---
-header_col1, header_col2 = st.columns([6, 1])
+# --- 3. ΕΠΙΚΕΦΑΛΙΔΑ & ΚΟΥΜΠΙΑ ΣΗΜΑΙΩΝ ΜΕ ΕΙΚΟΝΕΣ ---
+header_col1, header_col2 = st.columns([4, 2])
 
 with header_col1:
     st.title(t["title"])
 
 with header_col2:
     st.write("") # Μικρό κενό για ευθυγράμμιση
+    # Δημιουργούμε δύο στήλες για τις σημαίες
     flag_col1, flag_col2 = st.columns(2)
+    
     with flag_col1:
-        if st.button("🇬🇧", help="English"):
+        # Εμφάνιση μικρής αγγλικής σημαίας και κουμπί από κάτω
+        st.image("https://flagcdn.com/w40/gb.png", width=30)
+        if st.button("EN", key="btn_en"):
             st.session_state.lang = 'EN'
             st.rerun()
+            
     with flag_col2:
-        if st.button("🇬🇷", help="Ελληνικά"):
+        # Εμφάνιση μικρής ελληνικής σημαίας και κουμπί από κάτω
+        st.image("https://flagcdn.com/w40/gr.png", width=30)
+        if st.button("EL", key="btn_el"):
             st.session_state.lang = 'EL'
             st.rerun()
 
