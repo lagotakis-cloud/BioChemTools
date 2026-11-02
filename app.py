@@ -217,4 +217,3 @@ if st.button(t["btn_calc"]):
                 with col2:
                     img = Draw.MolToImage(row["Molecule"], size=(300, 150))
                     st.image(img)
-
