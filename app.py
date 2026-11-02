@@ -48,26 +48,47 @@ def highlight_lipinski(row):
 
 # --- 1. ΤΙΤΛΟΣ & ΠΕΡΙΓΡΑΦΗ ---
 st.title("🧪 Lipinski Rule of 5 Checker")
-st.write("Πληκτρολόγησε απλά τα ονόματα των φαρμάκων στα αγγλικά και το εργαλείο θα ελέγξει αυτόματα τους κανόνες!")
+st.write("Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων αυτόματα μέσω PubChem & RDKit.")
 
-# --- 2. ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ ΑΠΟ ΧΡΗΣΤΗ ---
-input_option = st.radio("Επιλογή:", ("Δοκιμή με έτοιμα ονόματα", "Πληκτρολόγηση ονομάτων"))
+# --- 2. ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ ΑΠΟ ΧΡΗΣΤΗ (3 ΕΠΙΛΟΓΕΣ) ---
+input_option = st.radio(
+    "Επιλέξτε τρόπο εισαγωγής μορίων:", 
+    ("Δοκιμή με έτοιμα ονόματα", "Πληκτρολόγηση ονομάτων", "Ανέβασμα αρχείου")
+)
 
 names_list = []
 
 if input_option == "Δοκιμή με έτοιμα ονόματα":
-    # Εδώ αλλάξαμε τη λίστα: προσθέσαμε Cyclosporin A και Vancomycin
     names_list = ["Aspirin", "Cyclosporin A", "Ibuprofen", "Vancomycin", "Omeprazole"]
     st.write("Δοκιμαστική λίστα:", ", ".join(names_list))
-else:
+
+elif input_option == "Πληκτρολόγηση ονομάτων":
     user_input = st.text_area("Γράψτε τα ονόματα (ένα ανά γραμμή):", 
-                              value="Aspirin\nCyclosporin A\nVancomycin")
+                              value="Aspirin\nParacetamol\nCaffeine")
     names_list = [name.strip() for name in user_input.split("\n") if name.strip()]
+
+else:  # Ανέβασμα αρχείου
+    uploaded_file = st.file_uploader("Ανεβάστε αρχείο (CSV με στήλη 'Name' ή TXT με ένα όνομα ανά γραμμή):", type=["csv", "txt"])
+    
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith('.csv'):
+                df_upload = pd.read_csv(uploaded_file)
+                # Αν υπάρχει στήλη 'Name' την παίρνουμε, αλλιώς παίρνουμε την πρώτη στήλη
+                col_name = 'Name' if 'Name' in df_upload.columns else df_upload.columns[0]
+                names_list = df_upload[col_name].dropna().astype(str).tolist()
+            else:  # Αρχείο TXT
+                stringdata = uploaded_file.getvalue().decode("utf-8")
+                names_list = [line.strip() for line in stringdata.splitlines() if line.strip()]
+            
+            st.success(f"Επιτυχής φόρτωση {len(names_list)} ονομάτων από το αρχείο!")
+        except Exception as e:
+            st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
 
 # --- 3. ΥΠΟΛΟΓΙΣΜΟΣ ΚΑΝΟΝΩΝ ---
 if st.button("Αναζήτηση & Υπολογισμός"):
     if not names_list:
-        st.warning("Παρακαλώ εισάγετε τουλάχιστον ένα όνομα.")
+        st.warning("Παρακαλώ εισάγετε ή ανεβάστε τουλάχιστον ένα όνομα.")
     else:
         results = []
         progress_bar = st.progress(0)
@@ -76,7 +97,7 @@ if st.button("Αναζήτηση & Υπολογισμός"):
             smi = get_smiles_from_pubchem(name)
             
             if smi is None:
-                st.error(f"Δεν βρέθηκε η ένωση: **{name}** στο PubChem. Ελέγξτε την ορθογραφία.")
+                st.warning(f"Δεν βρέθηκε η ένωση: **{name}** στο PubChem. Παράλειψη.")
                 continue
             
             mol = Chem.MolFromSmiles(smi)
@@ -122,6 +143,15 @@ if st.button("Αναζήτηση & Υπολογισμός"):
             
             st.dataframe(styled_df, use_container_width=True)
             
+            # Δυνατότητα λήψης των αποτελεσμάτων σε CSV
+            csv_data = df_display.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Λήψη αποτελεσμάτων ως CSV",
+                data=csv_data,
+                file_name='lipinski_results.csv',
+                mime='text/csv',
+            )
+            
             st.subheader("🔬 2D Δομές Μορίων")
             for index, row in df_results.iterrows():
                 col1, col2 = st.columns([1, 2])
@@ -131,3 +161,4 @@ if st.button("Αναζήτηση & Υπολογισμός"):
                 with col2:
                     img = Draw.MolToImage(row["Molecule"], size=(300, 150))
                     st.image(img)
+
