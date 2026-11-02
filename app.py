@@ -5,36 +5,12 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen
 from rdkit.Chem import Draw
 
-# --- 1. ΛΕΞΙΚΟ ΜΕΤΑΦΡΑΣΕΩΝ (MULTILINGUAL DICTIONARY) ---
+# --- 1. ΔΙΑΧΕΙΡΙΣΗ STATE & ΓΛΩΣΣΑΣ (Default: EN) ---
+if 'lang' not in st.session_state:
+    st.session_state.lang = 'EN'
+
+# --- 2. ΛΕΞΙΚΟ ΜΕΤΑΦΡΑΣΕΩΝ ---
 LANG = {
-    "EL": {
-        "title": "🧪 Lipinski Rule of 5 Checker",
-        "description": "Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων αυτόματα μέσω PubChem & RDKit.",
-        "input_label": "Επιλέξτε τρόπο εισαγωγής μορίων:",
-        "opt_preset": "Δοκιμή με έτοιμα ονόματα",
-        "opt_manual": "Πληκτρολόγηση ονομάτων",
-        "opt_upload": "Ανέβασμα αρχείου",
-        "preset_info": "Δοκιμαστική λίστα:",
-        "manual_prompt": "Γράψτε τα ονόματα (ένα ανά γραμμή):",
-        "upload_prompt": "Ανεβάστε αρχείο (CSV με στήλη 'Name' ή TXT με ένα όνομα ανά γραμμή):",
-        "upload_success": "Επιτυχής φόρτωση {} ονομάτων από το αρχείο!",
-        "upload_error": "Σφάλμα κατά την ανάγνωση του αρχείου: {}",
-        "btn_calc": "Αναζήτηση & Υπολογισμός",
-        "warn_no_input": "Παρακαλώ εισάγετε ή ανεβάστε τουλάχιστον ένα όνομα.",
-        "warn_not_found": "Δεν βρέθηκε η ένωση: **{}** στο PubChem. Παράλειψη.",
-        "res_header": "📊 Αποτελέσματα Ανάλυσης",
-        "btn_download": "📥 Λήψη αποτελεσμάτων ως CSV",
-        "struct_header": "🔬 2D Δομές Μορίων",
-        "col_name": "Όνομα",
-        "col_mw": "Μοριακό Βάρος (MW)",
-        "col_logp": "LogP",
-        "col_hbd": "Δότες H (HBD)",
-        "col_hba": "Δέκτες H (HBA)",
-        "col_violations": "Παραβάσεις",
-        "col_status": "Κατάσταση",
-        "status_pass": "Passed (Drug-like)",
-        "status_fail": "Failed"
-    },
     "EN": {
         "title": "🧪 Lipinski Rule of 5 Checker",
         "description": "Assess molecular drug-likeness automatically via PubChem & RDKit.",
@@ -62,12 +38,59 @@ LANG = {
         "col_status": "Status",
         "status_pass": "Passed (Drug-like)",
         "status_fail": "Failed"
+    },
+    "EL": {
+        "title": "🧪 Lipinski Rule of 5 Checker",
+        "description": "Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων αυτόματα μέσω PubChem & RDKit.",
+        "input_label": "Επιλέξτε τρόπο εισαγωγής μορίων:",
+        "opt_preset": "Δοκιμή με έτοιμα ονόματα",
+        "opt_manual": "Πληκτρολόγηση ονομάτων",
+        "opt_upload": "Ανέβασμα αρχείου",
+        "preset_info": "Δοκιμαστική λίστα:",
+        "manual_prompt": "Γράψτε τα ονόματα (ένα ανά γραμμή):",
+        "upload_prompt": "Ανεβάστε αρχείο (CSV με στήλη 'Name' ή TXT με ένα όνομα ανά γραμμή):",
+        "upload_success": "Επιτυχής φόρτωση {} ονομάτων από το αρχείο!",
+        "upload_error": "Σφάλμα κατά την ανάγνωση του αρχείου: {}",
+        "btn_calc": "Αναζήτηση & Υπολογισμός",
+        "warn_no_input": "Παρακαλώ εισάγετε ή ανεβάστε τουλάχιστον ένα όνομα.",
+        "warn_not_found": "Δεν βρέθηκε η ένωση: **{}** στο PubChem. Παράλειψη.",
+        "res_header": "📊 Αποτελέσματα Ανάλυσης",
+        "btn_download": "📥 Λήψη αποτελεσμάτων ως CSV",
+        "struct_header": "🔬 2D Δομές Μορίων",
+        "col_name": "Όνομα",
+        "col_mw": "Μοριακό Βάρος (MW)",
+        "col_logp": "LogP",
+        "col_hbd": "Δότες H (HBD)",
+        "col_hba": "Δέκτες H (HBA)",
+        "col_violations": "Παραβάσεις",
+        "col_status": "Κατάσταση",
+        "status_pass": "Passed (Drug-like)",
+        "status_fail": "Failed"
     }
 }
 
-# --- 2. ΕΠΙΛΟΓΗ ΓΛΩΣΣΑΣ ΣΤΟ SIDEBAR ---
-language_choice = st.sidebar.selectbox("🌐 Language / Γλώσσα", ("Ελληνικά", "English"))
-t = LANG["EL"] if language_choice == "Ελληνικά" else LANG["EN"]
+t = LANG[st.session_state.lang]
+
+# --- 3. ΕΠΙΚΕΦΑΛΙΔΑ & ΚΟΥΜΠΙΑ ΣΗΜΑΙΩΝ ΣΤΟ ΠΑΝΩ ΜΕΡΟΣ ---
+header_col1, header_col2 = st.columns([6, 1])
+
+with header_col1:
+    st.title(t["title"])
+
+with header_col2:
+    st.write("") # Μικρό κενό για ευθυγράμμιση
+    flag_col1, flag_col2 = st.columns(2)
+    with flag_col1:
+        if st.button("🇬🇧", help="English"):
+            st.session_state.lang = 'EN'
+            st.rerun()
+    with flag_col2:
+        if st.button("🇬🇷", help="Ελληνικά"):
+            st.session_state.lang = 'EL'
+            st.rerun()
+
+st.write(t["description"])
+st.markdown("---")
 
 # --- ΣΥΝΑΡΤΗΣΕΙΣ ---
 def get_smiles_from_pubchem(compound_name):
@@ -106,10 +129,6 @@ def highlight_lipinski(row):
         styles[idx] = 'background-color: #f8d7da; color: #721c24;'
         
     return styles
-
-# --- 3. ΤΙΤΛΟΣ & ΠΕΡΙΓΡΑΦΗ ---
-st.title(t["title"])
-st.write(t["description"])
 
 # --- 4. ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ ---
 input_option = st.radio(
