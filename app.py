@@ -41,7 +41,7 @@ st.markdown('<p class="subtitle">Ανοιχτή, ταχεία σουίτα υπ�
 # Οριζόντια μπάρα γρήγορων συνδέσμων
 col_n1, col_n2, col_n3, col_n4 = st.columns(4)
 with col_n1:
-    st.page_link("Home.py", label="🏠 Αρχική", icon="🏠")
+    st.page_link("app.py", label="🏠 Αρχική", icon="🏠")
 with col_n2:
     st.page_link("pages/1_lipinski.py", label="💊 Lipinski Rule of 5", icon="💊")
 with col_n3:
