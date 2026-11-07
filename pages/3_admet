@@ -36,9 +36,9 @@ else:
                 smiles_input = compounds[0].canonical_smiles
                 mol = Chem.MolFromSmiles(smiles_input)
                 molecule_name = name_input
-                st.success(Found: {molecule_name} (SMILES: `{smiles_input}`))
+                st.success(f"Βρέθηκε: {molecule_name} (SMILES: `{smiles_input}`)")
             else:
-                st.error("Το μόριο δεν βρέθηκε στηνPubChem.")
+                st.error("Το μόριο δεν βρέθηκε στην PubChem.")
         except Exception as e:
             st.error(f"Σφάλμα επικοινωνίας με PubChem: {e}")
 
