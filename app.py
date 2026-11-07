@@ -1,5 +1,7 @@
 import streamlit as st
 
+st.error("ΕΔΩ ΕΙΜΑΙ - ΤΟ APP.PY ΤΡΕΧΕΙ ΚΑΝΟΝΙΚΑ!")
+
 # Ρύθμιση σελίδας με κλειστή πλαϊνή μπάρα για καθαρό dashboard look
 st.set_page_config(
     page_title="biochemtools.tech | Cheminformatics Suite",
