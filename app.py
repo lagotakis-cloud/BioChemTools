@@ -30,7 +30,7 @@ st.markdown('<p class="main-title">🧬 biochemtools.tech</p>', unsafe_allow_htm
 st.markdown('<p class="subtitle">Ανοιχτή, ταχεία σουίτα υπολογιστικής χημείας και cheminformatics για την ανακάλυψη φαρμάκων.</p>', unsafe_allow_html=True)
 
 # Οριζόντια μπάρα γρήγορων συνδέσμων
-col_n1, col_n2, col_n3, col_n4 = st.columns(4)
+col_n1, col_n2, col_n3, col_n4, col_n5, col_n6, col_n7, col_n8, col_n9 = st.columns(9)
 with col_n1:
     st.page_link("app.py", label="Αρχική")
 with col_n2:
