@@ -1,6 +1,6 @@
 [theme]
 primaryColor = "#10B981"        # Emerald Green
-backgroundColor = "#10B981"     # Zinc Dark
+backgroundColor = "#660099"     # Zinc Dark
 secondaryBackgroundColor = "#27272A" 
 textColor = "#FAFAFA"
 font = "sans serif"
