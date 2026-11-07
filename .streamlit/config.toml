@@ -3,4 +3,4 @@ primaryColor = "#10B981"        # Emerald Green
 backgroundColor = "#660099"     # Zinc Dark
 secondaryBackgroundColor = "#FFFF66" 
 textColor = "#CC66CC"
-font = "sans serif"
+font = "helvetica"
