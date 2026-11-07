@@ -9,7 +9,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-render_navbar
+render_navbar()
 
 # Custom CSS για μοντέρνα εμφάνιση και banners
 st.markdown("""
