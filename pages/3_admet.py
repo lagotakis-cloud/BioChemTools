@@ -1,7 +1,10 @@
 import streamlit as st
+from components import render_navbar
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen, Lipinski
 import pubchempy as pcp
+
+render_navbar()
 
 st.set_page_config(page_title="ADMET & Physicochemical Profiler", page_icon="💊", layout="wide")
 
