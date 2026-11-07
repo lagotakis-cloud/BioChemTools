@@ -1,7 +1,5 @@
 import streamlit as st
 
-st.error("ΕΔΩ ΕΙΜΑΙ - ΤΟ APP.PY ΤΡΕΧΕΙ ΚΑΝΟΝΙΚΑ!")
-
 # Ρύθμιση σελίδας με κλειστή πλαϊνή μπάρα για καθαρό dashboard look
 st.set_page_config(
     page_title="biochemtools.tech | Cheminformatics Suite",
@@ -9,38 +7,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
-st.markdown("""
-<style>
-    /* Αλλαγή βασικής γραμματοσειράς σε όλη την εφαρμογή */
-    html, body, [class*="css"] {
-        font-family: 'Inter', 'Segoe UI', sans-serif;
-    }
-
-    /* Κεντρικός τίτλος με gradient χρώμα αντί για απλό μπλε */
-    .main-title {
-        font-size: 3rem;
-        font-weight: 900;
-        background: linear-gradient(90deg, #1E3A8A, #0D9488);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0px;
-    }
-
-    /* Στυλ για τις κάρτες (containers) */
-    div[data-testid="stVerticalBlock"] div[data-testid="stContainer"] {
-        border: 1px solid #E5E7EB;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-    }
-    
-    /* Εφέ αιώρησης (hover) στις κάρτες για μοντέδρνα αίσθηση SaaS */
-    div[data-testid="stVerticalBlock"] div[data-testid="stContainer"]:hover {
-        border-color: #0D9488;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    }
-</style>
-""", unsafe_allow_html=True)
 
 # Custom CSS για μοντέρνα εμφάνιση και banners
 st.markdown("""
@@ -55,15 +21,6 @@ st.markdown("""
         font-size: 1.2rem;
         color: #4B5563;
         margin-bottom: 30px;
-    }
-    .nav-bar {
-        background-color: #F3F4F6;
-        padding: 10px 20px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-        display: flex;
-        justify-content: space-around;
-        font-weight: 600;
     }
 </style>
 """, unsafe_allow_html=True)
