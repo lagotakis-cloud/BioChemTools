@@ -1,9 +1,12 @@
 import streamlit as st
+from components import render_navbar
 from rdkit import Chem
 from rdkit.Chem import DataStructs
 from rdkit.Chem.Fingerprints import FingerprintMols
 import pandas as pd
 import plotly.express as px
+
+render_navbar()
 
 st.set_page_config(page_title="Multi-Molecule Similarity Matrix", page_icon="📈", layout="wide")
 
