@@ -1,9 +1,12 @@
 import streamlit as st
+from components import render_navbar
 import pandas as pd
 import pubchempy as pcp
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen
 from rdkit.Chem import Draw
+
+render_navbar()
 
 # --- 1. ΔΙΑΧΕΙΡΙΣΗ STATE & ΓΛΩΣΣΑΣ (Default: EN) ---
 if 'lang' not in st.session_state:
