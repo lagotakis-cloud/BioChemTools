@@ -3,26 +3,21 @@ import streamlit as st
 def render_navbar():
     """Εμφανίζει την οριζόντια, κολλημένη (sticky) μπάρα πλοήγησης με όλα τα 8 εργαλεία."""
     
-    # Custom CSS για να γίνει η μπάρα κολλημένη στην κορυφή (sticky) 
-    # και να μένει πάντα ορατή κατά το scroll.
     st.markdown("""
     <style>
-        /* Στυλ για το container της πλοήγησης ώστε να κολλάει ψηλά */
-        .sticky-nav {
-            position: sticky;
-            top: 0;
-            z-index: 99999;
-            background-color: var(--background-color, #FFFFFF);
-            padding-top: 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #E5E7EB;
+        /* Στοχεύουμε τα blocks του Streamlit που περιέχουν τα links της μπάρας */
+        .stHorizontalBlock {
+            position: sticky !important;
+            top: 0px !important;
+            z-index: 999999 !important;
+            background-color: var(--background-color, #FFFFFF) !important;
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
+            border-bottom: 2px solid #E5E7EB;
             backdrop-filter: blur(10px);
         }
     </style>
     """, unsafe_allow_html=True)
-
-    # Τυλίγουμε τη ναυσιπλοΐα σε ένα div με την κλάση sticky-nav
-    st.markdown('<div class="sticky-nav">', unsafe_allow_html=True)
     
     # --- 1η Σειρά Εργαλείων ---
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -48,6 +43,5 @@ def render_navbar():
     with col9:
         st.page_link("pages/8_similarity_matrix.py", label="📈 Similarity", icon="📈")
         
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
