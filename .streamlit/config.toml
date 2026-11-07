@@ -12,4 +12,4 @@ secondaryBackgroundColor = "#1E293B"
 textColor = "#F8FAFC" 
 
 # Επιλογή γραμματοσειράς ('sans serif', 'serif', 'monospace')
-font = "sans serif"
+font = "monospace"
