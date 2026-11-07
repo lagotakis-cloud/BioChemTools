@@ -1,13 +1,26 @@
 import streamlit as st
 
 def render_navbar():
-    """Εμφανίζει μια καθαρή, κομψή οριζόντια μπάρα πλοήγησης για όλα τα 8 εργαλεία."""
+    """Εμφανίζει την οριζόντια μπάρα πλοήγησης, κολλημένη σταθερά ψηλά κατά το scroll."""
     
     st.markdown("""
     <style>
-        /* Μικρό, καθαρό στυλ για τα links της μπάρας ώστε να δείχνουν ομοιόμορφα */
-        .stPageLink {
-            font-size: 0.9rem;
+        /* Κάνουμε sticky ΜΟΝΟ τις δύο πρώτες σειρές blocks (δηλαδή το navbar) 
+           στην κορυφή, χωρίς να επηρεάζουμε τα banners παρακάτω */
+        div.stMainBlockContainer > div.stVerticalBlock > div.stHorizontalBlock:nth-of-type(1),
+        div.stMainBlockContainer > div.stVerticalBlock > div.stHorizontalBlock:nth-of-type(2) {
+            position: sticky !important;
+            top: 0px !important;
+            z-index: 99999 !important;
+            background-color: var(--background-color, #090D16) !important;
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Η 2η σειρά καθήμενή ακριβώς κάτω από την 1η */
+        div.stMainBlockContainer > div.stVerticalBlock > div.stHorizontalBlock:nth-of-type(2) {
+            top: 48px !important; 
         }
     </style>
     """, unsafe_allow_html=True)
@@ -36,4 +49,5 @@ def render_navbar():
     with col9:
         st.page_link("pages/8_similarity_matrix.py", label="📈 Similarity", icon="📈")
         
-    st.markdown("---")
+    # Μικρό διακριτικό κενό μετά το navbar για να ξεκινήσει το περιεχόμενο της σελίδας
+    st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
