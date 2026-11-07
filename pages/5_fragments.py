@@ -1,7 +1,10 @@
 import streamlit as st
+from components import render_navbar
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen, Lipinski, Draw
 import pubchempy as pcp
+
+render_navbar()
 
 st.set_page_config(page_title="Fragment-Based Drug Design (Ro3)", page_icon="🔬", layout="wide")
 
