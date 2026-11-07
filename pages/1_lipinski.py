@@ -46,11 +46,11 @@ def highlight_lipinski(row):
         "background-color: #f8d7da; color: #721c24; font-weight: bold;"
     )
 
-  if row["MW_raw"] > 500:
+  if row["Μοριακό Βάρος (MW)"] > 500:
     styles[row.index.get_loc("Μοριακό Βάρος (MW)")] = (
         "background-color: #f8d7da; color: #721c24;"
     )
-  if row["LogP_raw"] > 5:
+  if row["LogP"] > 5:
     styles[row.index.get_loc("LogP")] = "background-color: #f8d7da; color: #721c24;"
   if row["Δότες H (HBD)"] > 5:
     styles[row.index.get_loc("Δότες H (HBD)")] = (
@@ -156,9 +156,7 @@ if st.session_state.lipinski_results is None:
             "Όνομα": name,
             "SMILES": smi,
             "Μοριακό Βάρος (MW)": round(mw, 2),
-            "MW_raw": mw,  # Αποθήκευση καθαρού αριθμού για ελέγχους
             "LogP": round(logp, 2),
-            "LogP_raw": logp,  # Αποθήκευση καθαρού αριθμού για ελέγχους
             "Δότες H (HBD)": hbd,
             "HBA_val": hba,
             "Δέκτες H (HBA)": hba,
@@ -185,18 +183,14 @@ else:
 
   st.subheader("📊 Αποτελέσματα Ανάλυσης")
 
-  # Αφαίρεση βοηθητικών στηλών από την εμφάνιση
-  df_display = df_results.drop(
-      columns=["SMILES", "Molecule", "HBA_val", "MW_raw", "LogP_raw"]
-  )
+  # Αφαίρεση βοηθητικών στηλών
+  df_display = df_results.drop(columns=["SMILES", "Molecule", "HBA_val"])
 
-  # Μορφοποίηση αριθμητικών σε 2 δεκαδικά ψηφία για την οθόνη
-  df_display["Μοριακό Βάρος (MW)"] = df_display["Μοριακό Βάρος (MW)"].map(
-      lambda x: f"{x:.2f}"
+  # Εφαρμογή styling και μορφοποίηση σε 2 δεκαδικά ψηφία χωρίς να χαλάσουν οι αριθμοί
+  styled_df = (
+      df_display.style.apply(highlight_lipinski, axis=1)
+      .format({"Μοριακό Βάρος (MW)": "{:.2f}", "LogP": "{:.2f}"})
   )
-  df_display["LogP"] = df_display["LogP"].map(lambda x: f"{x:.2f}")
-
-  styled_df = df_display.style.apply(highlight_lipinski, axis=1)
 
   st.dataframe(styled_df, use_container_width=True)
 
