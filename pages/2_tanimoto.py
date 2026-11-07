@@ -1,4 +1,5 @@
 import streamlit as st
+from components import render_navbar
 from rdkit import Chem
 from rdkit.Chem import AllChem, DataStructs, Draw
 import pandas as pd
