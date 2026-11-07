@@ -1,9 +1,6 @@
 import streamlit as st
 
 def render_navbar():
-  """Εμφανίζει την οριζόντια μπάρα πλοήγησης και τα γρήγορα links."""
-  
-  #Οριζόντια μπάρα γρήγορων συνδέσμων
   col_n1, col_n2, col_n3, col_n4, col_n5, col_n6, col_n7, col_n8, col_n9 = st.columns(9)
 with col_n1:
     st.page_link("app.py", label="Αρχική")
