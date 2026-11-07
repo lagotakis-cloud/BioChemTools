@@ -1,5 +1,6 @@
 streamlit
-rdkit
-pubchempy
+rdkit-pypi
 pandas
 plotly
+pubchempy
+pillow
