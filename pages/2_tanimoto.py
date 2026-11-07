@@ -6,6 +6,8 @@ import pandas as pd
 from PIL import Image
 import io
 
+render_navbar()
+
 st.set_page_config(page_title="Tanimoto Similarity Search | BiochemTools", page_icon="🎯", layout="wide")
 
 st.title("🎯 Tanimoto Molecular Similarity Search")
