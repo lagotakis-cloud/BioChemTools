@@ -1,9 +1,6 @@
 import streamlit as st
 
 def render_navbar():
-    """Εμφανίζει την οριζόντια μπάρα πλοήγησης και τα γρήγορα links."""
-    
-    # Εδώ δηλώνονται κανονικά οι στήλες εντός της συνάρτησης
     col_n1, col_n2, col_n3, col_n4 = st.columns(4)
     
     with col_n1:
