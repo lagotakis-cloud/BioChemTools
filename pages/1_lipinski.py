@@ -16,6 +16,10 @@ st.write(
 )
 st.markdown("---")
 
+# --- INITIALIZE SESSION STATE ---
+if "lipinski_results" not in st.session_state:
+  st.session_state.lipinski_results = None
+
 
 # --- ΣΥΝΑΡΤΗΣΕΙΣ ---
 def get_smiles_from_pubchem(compound_name):
@@ -108,7 +112,7 @@ else:
     except Exception as e:
       st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
 
-# --- 3. ΥΠΟΛΟΓΙΣΜΟΙ & ΠΡΟΒΟΛΗ ---
+# --- 3. ΥΠΟΛΟΓΙΣΜΟΙ ---
 if st.button("Αναζήτηση & Υπολογισμός"):
   if not names_list:
     st.warning("Παρακαλώ εισάγετε ή ανεβάστε τουλάχιστον ένα όνομα.")
@@ -159,59 +163,65 @@ if st.button("Αναζήτηση & Υπολογισμός"):
 
       progress_bar.progress((i + 1) / len(names_list))
 
-    if results:
-      df_results = pd.DataFrame(results)
+    # Αποθήκευση στο session_state για να μην χάνονται τα δεδομένα
+    st.session_state.lipinski_results = results
 
-      st.subheader("📊 Αποτελέσματα Ανάλυσης")
 
-      df_display = df_results.drop(columns=["SMILES", "Molecule", "HBA_val"])
-      styled_df = df_display.style.apply(highlight_lipinski, axis=1)
+# --- 4. ΠΡΟΒΟΛΗ ΑΠΟΤΕΛΕΣΜΑΤΩΝ & ΛΗΨΗ (Αν υπάρχουν στο session) ---
+if st.session_state.lipinski_results:
+  df_results = pd.DataFrame(st.session_state.lipinski_results)
 
-      st.dataframe(styled_df, use_container_width=True)
+  st.subheader("📊 Αποτελέσματα Ανάλυσης")
 
-      # --- 4. ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
-      st.markdown("### 📥 Λήψη Αποτελεσμάτων")
-      file_format = st.radio(
-          "Επιλέξτε μορφή αρχείου για λήψη:",
-          options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
-          horizontal=True,
-      )
+  df_display = df_results.drop(columns=["SMILES", "Molecule", "HBA_val"])
+  styled_df = df_display.style.apply(highlight_lipinski, axis=1)
 
-      if file_format == "CSV (.csv)":
-        file_data = df_display.to_csv(index=False).encode("utf-8")
-        file_name = "lipinski_results.csv"
-        mime_type = "text/csv"
+  st.dataframe(styled_df, use_container_width=True)
 
-      elif file_format == "Text (.txt)":
-        file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
-        file_name = "lipinski_results.txt"
-        mime_type = "text/plain"
+  # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
+  st.markdown("### 📥 Λήψη Αποτελεσμάτων")
+  file_format = st.radio(
+      "Επιλέξτε μορφή αρχείου για λήψη:",
+      options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
+      horizontal=True,
+      key="download_format_radio",
+  )
 
-      elif file_format == "Excel (.xlsx)":
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-          df_display.to_excel(writer, index=False, sheet_name="Lipinski_Ro5")
-        file_data = buffer.getvalue()
-        file_name = "lipinski_results.xlsx"
-        mime_type = (
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+  if file_format == "CSV (.csv)":
+    file_data = df_display.to_csv(index=False).encode("utf-8")
+    file_name = "lipinski_results.csv"
+    mime_type = "text/csv"
 
-      st.download_button(
-          label=f"⬇️ Λήψη αρχείου ({file_name})",
-          data=file_data,
-          file_name=file_name,
-          mime=mime_type,
-          type="primary",
-      )
+  elif file_format == "Text (.txt)":
+    file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
+    file_name = "lipinski_results.txt"
+    mime_type = "text/plain"
 
-      st.markdown("---")
-      st.subheader("🔬 2D Δομές Μορίων")
-      for index, row in df_results.iterrows():
-        col1, col2 = st.columns([1, 2])
-        with col1:
-          st.write(f"**{row['Όνομα']}**")
-          st.write(f"Κατάσταση: {row['Κατάσταση']}")
-        with col2:
-          img = Draw.MolToImage(row["Molecule"], size=(300, 150))
-          st.image(img)
+  elif file_format == "Excel (.xlsx)":
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+      df_display.to_excel(writer, index=False, sheet_name="Lipinski_Ro5")
+    file_data = buffer.getvalue()
+    file_name = "lipinski_results.xlsx"
+    mime_type = (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+  st.download_button(
+      label=f"⬇️ Λήψη αρχείου ({file_name})",
+      data=file_data,
+      file_name=file_name,
+      mime=mime_type,
+      type="primary",
+  )
+
+  st.markdown("---")
+  st.subheader("🔬 2D Δομές Μορίων")
+  for index, row in df_results.iterrows():
+    col1, col2 = st.columns([1, 2])
+    with col1:
+      st.write(f"**{row['Όνομα']}**")
+      st.write(f"Κατάσταση: {row['Κατάσταση']}")
+    with col2:
+      img = Draw.MolToImage(row["Molecule"], size=(300, 150))
+      st.image(img)
