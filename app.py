@@ -1,4 +1,5 @@
 import streamlit as st
+from components import render_navbar #Εισαγωγή οριζόντιας μπάρας
 
 # Ρύθμιση σελίδας με κλειστή πλαϊνή μπάρα για καθαρό dashboard look
 st.set_page_config(
@@ -7,6 +8,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+render_navbar
 
 # Custom CSS για μοντέρνα εμφάνιση και banners
 st.markdown("""
@@ -28,28 +31,6 @@ st.markdown("""
 # ----------------- HEADER & HORIZONTAL NAVIGATION -----------------
 st.markdown('<p class="main-title">🧬 biochemtools.tech</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Ανοιχτή, ταχεία σουίτα υπολογιστικής χημείας και cheminformatics για την ανακάλυψη φαρμάκων.</p>', unsafe_allow_html=True)
-
-# Οριζόντια μπάρα γρήγορων συνδέσμων
-col_n1, col_n2, col_n3, col_n4, col_n5, col_n6, col_n7, col_n8, col_n9 = st.columns(9)
-with col_n1:
-    st.page_link("app.py", label="Αρχική")
-with col_n2:
-    st.page_link("pages/1_lipinski.py", label="Lipinski Rule of 5")
-with col_n3:
-    st.page_link("pages/2_tanimoto.py", label="Tanimoto Similarity")
-with col_n4:
-    st.page_link("pages/3_admet.py", label="ADMET Profiler")
-with col_n5:
-    st.page_link("pages/4_functional_groups.py", label="Functional Groups")
-with col_n6:
-    st.page_link("pages/5_fragments.py", label="Molecular Fragments")
-with col_n7:
-    st.page_link("pages/6_converter.py", label="Format Converter")
-with col_n8:
-    st.page_link("pages/7_scaffold.py", label="Scaffold Splitter")
-with col_n9:
-    st.page_link("pages/8_similarity_matrix.py", label="Similarity Matrix")
-st.markdown("---")
 
 # ----------------- BANNERS / CARDS ΓΙΑ ΤΑ 8 ΕΡΓΑΛΕΙΑ -----------------
 st.subheader("🚀 Εξερευνήστε τα Εργαλεία της Πλατφόρμας")
