@@ -58,12 +58,12 @@ if input_data:
         st.subheader("📊 Πίνακας Ομοιότητας Tanimoto")
         st.dataframe(df_matrix, use_container_width=True)
         
-        # Plotly Heatmap
+        # Plotly Heatmap (Διόρθωση σε color_continuous_scale)
         st.markdown("### 🌡️ Heatmap Οπτικοποίηση")
         fig = px.imshow(
             df_matrix,
             text_auto=True,
-            color_continuousScale="Blues",
+            color_continuous_scale="Blues",
             aspect="auto",
             labels=dict(color="Tanimoto Similarity")
         )
