@@ -35,7 +35,7 @@ else:
             else:
                 st.error("Δεν βρέθηκε το μόριο στην PubChem.")
         except Exception as e:
-            st.error(f_{Σφάλμα: {e}_})
+            st.error(f"Σφάλμα: {e}")
 
 if mol:
     st.markdown("---")
@@ -56,7 +56,7 @@ if mol:
         h_acceptors = Lipinski.NumHAcceptors(mol)
         rot_bonds = Descriptors.NumRotatableBonds(mol)
         
-        # Έλεγχος Ro3 (Όλα πρέπει να είναι <= 3, εκτός από το LogP που συχνά παίρνει τιμές γύρω στο 3)
+        # Έλεγχος Ro3
         checks = [
             ("Molecular Weight ≤ 300 Da", mw, mw <= 300, f"{mw:.1f} Da"),
             ("LogP ≤ 3", logp, logp <= 3, f"{logp:.2f}"),
