@@ -173,11 +173,21 @@ if st.session_state.lipinski_results:
 
   st.subheader("📊 Αποτελέσματα Ανάλυσης")
 
+  df_results = pd.DataFrame(st.session_state.lipinski_results)
+
+  st.subheader("📊 Αποτελέσματα Ανάλυσης")
+
   df_display = df_results.drop(columns=["SMILES", "Molecule", "HBA_val"])
+
+  # Μορφοποίηση των αριθμητικών στηλών ώστε να δείχνουν πάντα 2 δεκαδικά ψηφία
+  df_display["Μοριακό Βάρος (MW)"] = df_display["Μοριακό Βάρος (MW)"].map(
+      lambda x: f"{x:.2f}"
+  )
+  df_display["LogP"] = df_display["LogP"].map(lambda x: f"{x:.2f}")
+
   styled_df = df_display.style.apply(highlight_lipinski, axis=1)
 
   st.dataframe(styled_df, use_container_width=True)
-
   # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
   st.markdown("### 📥 Λήψη Αποτελεσμάτων")
   file_format = st.radio(
