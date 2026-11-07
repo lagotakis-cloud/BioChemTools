@@ -1,75 +1,79 @@
 import streamlit as st
 from rdkit import Chem
-from rdkit.Chem import Draw
-from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import Descriptors, Crippen, Lipinski, Draw
 import pubchempy as pcp
 
-st.set_page_config(page_title="Functional Groups Analyzer", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="Fragment-Based Drug Design (Ro3)", page_icon="🔬", layout="wide")
 
-st.title("🧪 Functional Groups & Substructure Analyzer")
-st.markdown("Αυτόματη ανίχνευση και καταμέτρηση βασικών λειτουργικών ομάδων σε οργανικά μόρια.")
+st.title("🔬 FBDD & Rule of 3 (Ro3) Checker")
+st.markdown("Αξιολόγηση μορίων και θραυσμάτων (Fragments) βάσει του κανόνα **Rule of 3** (Congreve et al.) για Fragment-Based Drug Discovery.")
 
 st.markdown("---")
 
 input_type = st.radio("Επιλέξτε τρόπο εισαγωγής:", ["SMILES", "Όνομα Μορίου (από PubChem)"])
 
 mol = None
+molecule_name = ""
 
 if input_type == "SMILES":
-    smiles_input = st.text_input("Εισάγετε SMILES:", "CC(=O)Oc1ccccc1C(=O)O") # Aspirin
+    smiles_input = st.text_input("Εισάγετε SMILES θραύσματος:", "c1ccccc1O") # Phenol
     if smiles_input:
         mol = Chem.MolFromSmiles(smiles_input)
+        molecule_name = "Custom Fragment"
         if not mol:
             st.error("Μη έγκυρο SMILES.")
 else:
-    name_input = st.text_input("Όνομα μορίου:", "Paracetamol")
+    name_input = st.text_input("Όνομα μορίου/θραύσματος:", "Phenol")
     if name_input:
         try:
             compounds = pcp.get_compounds(name_input, 'name')
             if compounds:
                 smiles_input = compounds[0].canonical_smiles
                 mol = Chem.MolFromSmiles(smiles_input)
-                st.success(f"Βρέθηκε: {name_input} (`{smiles_input}`)")
+                molecule_name = name_input
+                st.success(f"Βρέθηκε: {molecule_name} (`{smiles_input}`)")
             else:
-                st.error("Δεν βρέθηκε το μόριο.")
+                st.error("Δεν βρέθηκε το μόριο στην PubChem.")
         except Exception as e:
-            st.error(f"Σφάλμα: {e}")
+            st.error(f_{Σφάλμα: {e}_})
 
 if mol:
     st.markdown("---")
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([1, 2])
     
     with col1:
-        st.subheader("🖼️ Μοριακή Δομή")
-        img = Draw.MolToImage(mol, size=(400, 400))
+        st.subheader("🖼️ Δομή")
+        img = Draw.MolToImage(mol, size=(300, 300))
         st.image(img, use_container_width=True)
         
     with col2:
-        st.subheader("🔍 Ανίχνευση Ομάδων")
+        st.subheader("📊 Υπολογισμός Κανόνων Rule of 3")
         
-        # Ορισμός βασικών SMARTS patterns για λειτουργικές ομάδες
-        patterns = {
-            "Υδροξυλική Ομάδα (-OH αλκοόλης)": "[OX2H][CX4]",
-            "Καρβοξυλικό Οξύ (-COOH)": "C(=O)[OX2H1]",
-            "Εστέρας (-COO-)": "C(=O)O[CX4]",
-            "Πρωτοταγής Αμίνη (-NH2)": "[NX3H2]",
-            "Αρωματικός Δακτύλιος (Benzene-like)": "c1ccccc1",
-            "Καρβονύλιο (Κετόνη/Αλδεΰδη C=O)": "[CX3](=O)[#6]",
-            "Αλογόνα (F, Cl, Br, I)": "[F,Cl,Br,I]"
-        }
+        # Υπολογισμός ιδιοτήτων
+        mw = Descriptors.MolWt(mol)
+        logp = Crippen.MolLogP(mol)
+        h_donors = Lipinski.NumHDonors(mol)
+        h_acceptors = Lipinski.NumHAcceptors(mol)
+        rot_bonds = Descriptors.NumRotatableBonds(mol)
         
-        results = []
-        for name, smarts in patterns.items():
-            patt = Chem.MolFromSmarts(smarts)
-            if patt:
-                matches = mol.GetSubstructMatches(patt)
-                count = len(matches)
-                if count > 0:
-                    results.append({"Λειτουργική Ομάδα": name, "Εμφανίσεις": count})
-                    
-        if results:
-            import pandas as pd
-            df = pd.DataFrame(results)
-            st.dataframe(df, use_container_width=True)
+        # Έλεγχος Ro3 (Όλα πρέπει να είναι <= 3, εκτός από το LogP που συχνά παίρνει τιμές γύρω στο 3)
+        checks = [
+            ("Molecular Weight ≤ 300 Da", mw, mw <= 300, f"{mw:.1f} Da"),
+            ("LogP ≤ 3", logp, logp <= 3, f"{logp:.2f}"),
+            ("H-Bond Donors ≤ 3", h_donors, h_donors <= 3, str(h_donors)),
+            ("H-Bond Acceptors ≤ 3", h_acceptors, h_acceptors <= 3, str(h_acceptors)),
+            ("Rotatable Bonds ≤ 3", rot_bonds, rot_bonds <= 3, str(rot_bonds))
+        ]
+        
+        passed_count = 0
+        for desc, val, passed, val_str in checks:
+            status = "✅ Pass" if passed else "⚠️ Fail"
+            if passed:
+                passed_count += 1
+            st.write(f"**{desc}**: `{val_str}` — {status}")
+            
+        st.markdown("---")
+        if passed_count == 5:
+            st.success("🎯 **Εξαιρετικό Fragment!** Πληροί απόλυτα όλες τις προϋποθέσεις του Rule of 3 (Ro3).")
         else:
-            st.info("Δεν εντοπίστηκαν οι βασικές ομάδες της λίστας αναφοράς.")
+            st.warning(f"⚠️ Το μόριο πληροί {passed_count}/5 κριτήρια του Rule of 3. Ενδέχεται να είναι μεγαλύτερο από το τυπικό 'fragment'.")
