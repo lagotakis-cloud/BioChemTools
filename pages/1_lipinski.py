@@ -3,7 +3,6 @@ import pandas as pd
 import pubchempy as pcp
 from rdkit import Chem
 from rdkit.Chem import Crippen, Descriptors
-from rdkit.Chem import Draw
 import streamlit as st
 from components import render_navbar
 
@@ -12,7 +11,7 @@ render_navbar()
 # --- ΕΠΙΚΕΦΑΛΙΔΑ & ΠΕΡΙΓΡΑΦΗ ---
 st.title("🧪 Lipinski Rule of 5 Checker")
 st.write(
-    "Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων αυτόματα μέσω PubChem, SMILES &"
+    "Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων μαζικά μέσω PubChem, SMILES &"
     " RDKit."
 )
 st.markdown("---")
@@ -107,7 +106,7 @@ if st.session_state.lipinski_results is None:
     user_input = st.text_area(
         "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
         value=(
-            "CC(=O)OC1=CC=CC=C1C(=O)O\nCC(C)CC1=CC=C(C=C1)C(C)C(=O)O\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+            "CC(=O)OC1=CC=CC=C1C(=O)O\nCC(C)CC1=CC=CC(=C1)C(C)C(=O)O\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C"
         ),
     )
     input_data_list = [
@@ -181,7 +180,7 @@ if st.session_state.lipinski_results is None:
       for i, item in enumerate(input_data_list):
         if is_smiles_mode:
           smi = item
-          display_name = item  # Ως όνομα εμφανίζουμε το SMILES string
+          display_name = item
         else:
           display_name = item
           smi = get_smiles_from_pubchem(item)
@@ -227,7 +226,6 @@ if st.session_state.lipinski_results is None:
             "Δέκτες H (HBA)": hba,
             "Παραβάσεις": violations,
             "Κατάσταση": status,
-            "Molecule": mol,
         })
 
         progress_bar.progress((i + 1) / len(input_data_list))
@@ -248,8 +246,8 @@ else:
 
   st.subheader("📊 Αποτελέσματα Ανάλυσης")
 
-  # Αφαίρεση βοηθητικών στηλών
-  df_display = df_results.drop(columns=["SMILES", "Molecule", "HBA_val"])
+  # Αφαίρεση βοηθητικής στήλης
+  df_display = df_results.drop(columns=["SMILES", "HBA_val"])
 
   # Εφαρμογή styling και μορφοποίηση σε 2 δεκαδικά ψηφία
   styled_df = (
@@ -295,14 +293,3 @@ else:
       mime=mime_type,
       type="primary",
   )
-
-  st.markdown("---")
-  st.subheader("🔬 2D Δομές Μορίων")
-  for index, row in df_results.iterrows():
-    col1, col2 = st.columns([1, 2])
-    with col1:
-      st.write(f"**{row['Όνομα / SMILES']}**")
-      st.write(f"Κατάσταση: {row['Κατάσταση']}")
-    with col2:
-      img = Draw.MolToImage(row["Molecule"], size=(300, 150))
-      st.image(img)
