@@ -1,6 +1,6 @@
 [theme]
 primaryColor = "#919090"        # Dark Grey
-backgroundColor = "#c91215"     # Red
+backgroundColor = "#69d186"     # Mint
 secondaryBackgroundColor = "#f5f5ed" # Gray
 textColor = "#12120f"
 font = "helvetica"
