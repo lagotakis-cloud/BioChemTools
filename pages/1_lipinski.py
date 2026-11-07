@@ -169,10 +169,7 @@ if st.button("Αναζήτηση & Υπολογισμός"):
 
 # --- 4. ΠΡΟΒΟΛΗ ΑΠΟΤΕΛΕΣΜΑΤΩΝ & ΛΗΨΗ (Αν υπάρχουν στο session) ---
 if st.session_state.lipinski_results:
-  df_results = pd.DataFrame(st.session_state.lipinski_results)
-
-  st.subheader("📊 Αποτελέσματα Ανάλυσης")
-
+    
   df_results = pd.DataFrame(st.session_state.lipinski_results)
 
   st.subheader("📊 Αποτελέσματα Ανάλυσης")
