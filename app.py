@@ -27,7 +27,7 @@ st.markdown("""
 
 # ----------------- HEADER & HORIZONTAL NAVIGATION -----------------
 st.markdown('<p class="main-title">🧬 biochemtools.tech</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Ανοιχτή, ταχεία σουίτα υπολογιστικής χημείας και cheminformatics για την ανακάλυψη φαρμάκων.</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle"> Free, open tools suite for drug discovery, biochemistry & genetics.</p>', unsafe_allow_html=True)
 
 # ----------------- BANNERS / CARDS ΓΙΑ ΤΑ 8 ΕΡΓΑΛΕΙΑ -----------------
 st.subheader("🚀 Εξερευνήστε τα Εργαλεία της Πλατφόρμας")
