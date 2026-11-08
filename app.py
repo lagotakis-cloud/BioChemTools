@@ -1,5 +1,4 @@
 import streamlit as st
-from components import render_navbar #Εισαγωγή οριζόντιας μπάρας
 
 # Ρύθμιση σελίδας με κλειστή πλαϊνή μπάρα για καθαρό dashboard look
 st.set_page_config(
@@ -8,8 +7,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
-render_navbar()
 
 # Custom CSS για μοντέρνα εμφάνιση και banners
 st.markdown("""
