@@ -14,15 +14,7 @@ st.set_page_config(
     page_icon="assets/organic.png",  # Η εικόνα σου
     layout="wide",
 )
-st.markdown(
-    """
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <img src="assets/organic.png" width="28">
-        <span style="font-size: 24px; font-weight: bold; line-height: 1;">Lipinski Rule of 5 Checker</span>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+st.title("Lipinski Rule of 5 Checker")
 st.write(
     "Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων μαζικά μέσω PubChem, SMILES &"
     " RDKit."
