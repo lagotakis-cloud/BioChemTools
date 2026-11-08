@@ -39,7 +39,7 @@ def render_navbar():
         st.page_link("pages/4_functional_groups.py", label="Functional Groups")
 
     # --- 2η Σειρά Εργαλείων ---
-    col6, col7, col8, col9 = st.columns(4)
+    col6, col7, col8, col9, col10 = st.columns(5)
     with col6:
         st.page_link("pages/5_fragments.py", label="Fragments")
     with col7:
@@ -48,6 +48,8 @@ def render_navbar():
         st.page_link("pages/7_scaffold.py", label="Scaffold")
     with col9:
         st.page_link("pages/8_similarity_matrix.py", label="Tanimoto Similarity")
+    with col10:
+        st.empty()
         
     # Μικρό διακριτικό κενό μετά το navbar για να ξεκινήσει το περιεχόμενο της σελίδας
     st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
