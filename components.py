@@ -32,7 +32,7 @@ def render_navbar():
     with col2:
         st.page_link("pages/1_lipinski.py", label="Lipinski Checker")
     with col3:
-        st.page_link("pages/2_tanimoto.py", label="Tanimoto", icon="🔍")
+        st.page_link("pages/2_veber.py", label="Veber", icon="🔍")
     with col4:
         st.page_link("pages/3_admet.py", label="ADMET", icon="🧪")
     with col5:
