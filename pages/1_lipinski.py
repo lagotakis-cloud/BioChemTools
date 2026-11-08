@@ -14,7 +14,7 @@ st.set_page_config(
     page_icon="assets/organic.png",  # Η εικόνα σου
     layout="wide",
 )
-st.image=("assets/organic.png",width=100)
+st.image("assets/organic.png",width=100)
 st.title("Lipinski Rule of 5 Checker")
 st.write(
     "Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων μαζικά μέσω PubChem, SMILES &"
