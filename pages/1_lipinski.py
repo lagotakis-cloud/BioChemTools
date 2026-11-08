@@ -11,7 +11,7 @@ render_navbar()
 # --- ΕΠΙΚΕΦΑΛΙΔΑ & ΠΕΡΙΓΡΑΦΗ ---
 st.set_page_config(
     page_title="Lipinski Rule of 5 | BiochemTools",
-    page_icon="assets/lipinski_icon.png",  # Η εικόνα σου
+    page_icon="assets/organic.png",  # Η εικόνα σου
     layout="wide",
 )
 st.title("Lipinski Rule of 5 Checker")
