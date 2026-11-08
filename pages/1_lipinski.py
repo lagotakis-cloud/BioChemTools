@@ -9,7 +9,11 @@ from components import render_navbar
 render_navbar()
 
 # --- ΕΠΙΚΕΦΑΛΙΔΑ & ΠΕΡΙΓΡΑΦΗ ---
-st.image(<a href="https://www.flaticon.com/free-icons/chemistry" title="chemistry icons">Chemistry icons created by Mayor Icons - Flaticon</a>)
+st.set_page_config(
+    page_title="Lipinski Rule of 5 | BiochemTools",
+    page_icon="assets/organic.png",  # Η εικόνα σου
+    layout="wide",
+)
 st.title("Lipinski Rule of 5 Checker")
 st.write(
     "Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων μαζικά μέσω PubChem, SMILES &"
