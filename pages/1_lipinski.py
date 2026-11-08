@@ -17,7 +17,7 @@ st.set_page_config(
 st.markdown(
     """
     <div style="display: flex; align-items: center; gap: 10px;">
-        <img src="assets/logo.png" width="28">
+        <img src="assets/organic.png" width="28">
         <span style="font-size: 24px; font-weight: bold; line-height: 1;">Lipinski Rule of 5 Checker</span>
     </div>
     """,
