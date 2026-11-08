@@ -9,7 +9,8 @@ from components import render_navbar
 render_navbar()
 
 # --- ΕΠΙΚΕΦΑΛΙΔΑ & ΠΕΡΙΓΡΑΦΗ ---
-st.title("🧪 Lipinski Rule of 5 Checker")
+st.image(<a href="https://www.flaticon.com/free-icons/chemistry" title="chemistry icons">Chemistry icons created by Mayor Icons - Flaticon</a>)
+st.title("Lipinski Rule of 5 Checker")
 st.write(
     "Ελέγξτε τη φαρμακολογική καταλληλότητα μορίων μαζικά μέσω PubChem, SMILES &"
     " RDKit."
