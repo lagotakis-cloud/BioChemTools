@@ -12,8 +12,8 @@ render_navbar()
 # --- ΕΠΙΚΕΦΑΛΙΔΑ & ΠΕΡΙΓΡΑΦΗ ---
 st.title("🧪 ADMET & Toxicity Screener")
 st.write(
-    "Εκτίμηση υδατικής διαλυτότητας (ESOL), έλεγχος PAINS filters και ανίχνευση"
-    " δραστικών τοξικών ομάδων."
+    "Αξιολόγηση υδατικής διαλυτότητας (ESOL), σάρωση PAINS filters και ανίχνευση"
+    " δραστικών/τοξικών χημικών ομάδων (Toxicophores)."
 )
 st.markdown("---")
 
@@ -28,14 +28,13 @@ def get_smiles_from_pubchem(compound_name):
     compounds = pcp.get_compounds(compound_name.strip(), "name")
     if compounds:
       return compounds[0].canonical_smiles
-    else:
-      return None
-  except Exception as e:
+    return None
+  except Exception:
     return None
 
 
 def calculate_esol(mol):
-  # Υπολογισμός ESOL (Delaney equation)
+  """Υπολογισμός υδατικής διαλυτότητας LogS (Delaney equation)."""
   logp = Descriptors.MolLogP(mol)
   mw = Descriptors.MolWt(mol)
   rotb = Descriptors.NumRotatableBonds(mol)
@@ -43,18 +42,37 @@ def calculate_esol(mol):
   ar_atoms = len([a for a in mol.GetAtoms() if a.GetIsAromatic()])
   ar_prop = ar_atoms / heavy_atoms if heavy_atoms > 0 else 0
 
-  # Delaney formula
   log_s = 0.16 - 0.63 * logp - 0.0062 * mw + 0.066 * rotb - 0.74 * ar_prop
   return log_s
 
 
+def classify_solubility(log_s):
+  """Κατηγοριοποίηση υδατικής διαλυτότητας βάσει LogS."""
+  if log_s > 0:
+    return "Highly Soluble"
+  elif log_s > -2:
+    return "Very Soluble"
+  elif log_s > -4:
+    return "Soluble"
+  elif log_s > -6:
+    return "Moderately Soluble"
+  elif log_s > -10:
+    return "Poorly Soluble"
+  else:
+    return "Insoluble"
+
+
 def check_structural_alerts(mol):
-  # Ορισμός ορισμένων τοξικών/δραστικών υποδομών (SMARTS)
+  """Ανίχνευση γνωστών τοξικών / δραστικών υποδομών μέσω SMARTS."""
   alerts = {
-      "Epoxide": "[OX1]1C2C1C2",
+      "Epoxide (Alkylating)": "[OX1]1C2C1C2",
       "Michael Acceptor": "[C,c]=C-[C,c]=[O,N,S]",
-      "Nitroaromatic": "c[N+](=O)[O-]",
+      "Nitroaromatic (Mutagenic)": "c[N+](=O)[O-]",
       "Aromatic Amine": "c[NH2]",
+      "Acyl Halide": "[CX3](=[OX1])[F,Cl,Br,I]",
+      "Alkyl Halide": "[CX4][Cl,Br,I]",
+      "Aldehyde (Reactive)": "[CX3H1](=O)[#6]",
+      "Hydrazine": "[NX3][NX3]",
   }
   found_alerts = []
   for name, smarts in alerts.items():
@@ -66,17 +84,20 @@ def check_structural_alerts(mol):
 
 def highlight_admet(row):
   styles = [""] * len(row)
+  status_idx = row.index.get_loc("Συνολική Κατάσταση")
   name_idx = row.index.get_loc("Όνομα / SMILES")
 
-  if "Safe" in str(row["Τοξικότητα / PAINS"]):
-    styles[name_idx] = (
+  if "Safe" in str(row["Συνολική Κατάσταση"]):
+    color_style = (
         "background-color: #d4edda; color: #155724; font-weight: bold;"
     )
   else:
-    styles[name_idx] = (
+    color_style = (
         "background-color: #f8d7da; color: #721c24; font-weight: bold;"
     )
 
+  styles[name_idx] = color_style
+  styles[status_idx] = color_style
   return styles
 
 
@@ -99,13 +120,20 @@ if st.session_state.admet_results is None:
   is_smiles_mode = False
 
   if input_option == "Δοκιμή με έτοιμα ονόματα":
-    input_data_list = ["Aspirin", "Paracetamol", "Caffeine", "Benzene", "Phenol"]
+    input_data_list = [
+        "Aspirin",
+        "Paracetamol",
+        "Caffeine",
+        "Glycidol",
+        "Emodin",
+        "Nitrobenzene",
+    ]
     st.write("Δοκιμαστική λίστα:", ", ".join(input_data_list))
 
   elif input_option == "Πληκτρολόγηση ονομάτων":
     user_input = st.text_area(
         "Γράψτε τα ονόματα (ένα ανά γραμμή):",
-        value="Aspirin\nParacetamol\nCaffeine",
+        value="Aspirin\nParacetamol\nCaffeine\nGlycidol",
     )
     input_data_list = [
         name.strip() for name in user_input.split("\n") if name.strip()
@@ -116,7 +144,10 @@ if st.session_state.admet_results is None:
     user_input = st.text_area(
         "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
         value=(
-            "CC(=O)OC1=CC=CC=C1C(=O)O\nCC(=O)NC1=CC=C(C=C1)O\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+            "CC(=O)OC1=CC=CC=C1C(=O)O\n"
+            "CC(=O)NC1=CC=C(C=C1)O\n"
+            "C1CO1CO\n"
+            "CC1=CC2=C(C(=C1)O)C(=O)C3=C(C2=O)C=C(C=C3O)O"
         ),
     )
     input_data_list = [
@@ -181,9 +212,10 @@ if st.session_state.admet_results is None:
       st.warning("Παρακαλώ εισάγετε ή ανεβάστε δεδομένα.")
     else:
       results = []
+      not_found = []
       progress_bar = st.progress(0)
 
-      # Φόρτωση καταλόγου PAINS
+      # Φόρτωση καταλόγου PAINS (A, B, C)
       params = FilterCatalogParams()
       params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
       catalog = FilterCatalog(params)
@@ -197,18 +229,23 @@ if st.session_state.admet_results is None:
           smi = get_smiles_from_pubchem(item)
 
         if smi is None:
+          not_found.append(display_name)
+          progress_bar.progress((i + 1) / len(input_data_list))
           continue
 
         mol = Chem.MolFromSmiles(smi)
         if mol is None:
+          not_found.append(display_name)
+          progress_bar.progress((i + 1) / len(input_data_list))
           continue
 
         # Υπολογισμοί ADMET
         esol = calculate_esol(mol)
+        sol_class = classify_solubility(esol)
         has_pains = catalog.HasMatch(mol)
         alerts = check_structural_alerts(mol)
 
-        # Κατάσταση
+        # Συνολική Κατάσταση
         if has_pains or len(alerts) > 0:
           toxicity_status = "Alert / PAINS Match"
         else:
@@ -217,15 +254,21 @@ if st.session_state.admet_results is None:
         results.append({
             "Όνομα / SMILES": display_name,
             "SMILES": smi,
-            "LogS (ESOL Solub.)": round(esol, 2),
+            "LogS (ESOL)": round(esol, 2),
+            "Κατηγορία Διαλυτότητας": sol_class,
             "PAINS Match": "Yes" if has_pains else "No",
             "Reactive Alerts": (
                 ", ".join(alerts) if alerts else "None detected"
             ),
-            "Τοξικότητα / PAINS": toxicity_status,
+            "Συνολική Κατάσταση": toxicity_status,
         })
 
         progress_bar.progress((i + 1) / len(input_data_list))
+
+      if not_found:
+        st.warning(
+            f"Δεν βρέθηκαν ή δεν ήταν έγκυρα τα εξής: {', '.join(not_found)}"
+        )
 
       if results:
         st.session_state.admet_results = results
@@ -241,16 +284,31 @@ else:
 
   df_results = pd.DataFrame(st.session_state.admet_results)
 
+  # --- KPI METRICS ---
+  total_mols = len(df_results)
+  safe_mols = len(
+      df_results[df_results["Συνολική Κατάσταση"].str.contains("Safe")]
+  )
+  alert_mols = total_mols - safe_mols
+
+  col1, col2, col3 = st.columns(3)
+  col1.metric("Συνολικά Μόρια", total_mols)
+  col2.metric("Ασφαλή (No Alerts)", safe_mols)
+  col3.metric("Alerts / PAINS", alert_mols)
+
+  st.markdown("---")
+
   st.subheader("📊 Αποτελέσματα ADMET & Toxicity Screening")
   st.info(
-      "Η παράμετρος LogS (ESOL) δείχνει τη διαλυτότητα (τιμές κοντά στο 0"
-      " δηλώνουν υψηλή διαλυτότητα, ενώ < -6 πολύ χαμηλή)."
+      "**Οδηγός LogS (ESOL):** Τιμές > 0 (Highly Soluble), -2 έως 0 (Very"
+      " Soluble), -4 έως -2 (Soluble), -6 έως -4 (Moderately Soluble), < -6"
+      " (Poorly Soluble / Insoluble)."
   )
 
   df_display = df_results.drop(columns=["SMILES"])
 
   styled_df = df_display.style.apply(highlight_admet, axis=1).format(
-      {"LogS (ESOL Solub.)": "{:.2f}"}
+      {"LogS (ESOL)": "{:.2f}"}
   )
 
   st.dataframe(styled_df, use_container_width=True)
