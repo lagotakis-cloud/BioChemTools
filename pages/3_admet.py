@@ -102,117 +102,265 @@ def highlight_admet(row):
 
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ
+# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ (ΜΕ ΦΟΡΜΑ)
 # ==========================================
 if st.session_state.admet_results is None:
-  input_option = st.radio(
-      "Επιλέξτε τρόπο εισαγωγής μορίων:",
-      (
-          "Δοκιμή με έτοιμα ονόματα",
-          "Πληκτρολόγηση ονομάτων",
-          "Πληκτρολόγηση SMILES",
-          "Ανέβασμα αρχείου ονομάτων",
-          "Ανέβασμα αρχείου SMILES",
-      ),
-  )
-
-  input_data_list = []
-  is_smiles_mode = False
-
-  if input_option == "Δοκιμή με έτοιμα ονόματα":
-    input_data_list = [
-        "Aspirin",
-        "Paracetamol",
-        "Caffeine",
-        "Glycidol",
-        "Emodin",
-        "Nitrobenzene",
-    ]
-    st.write("Δοκιμαστική λίστα:", ", ".join(input_data_list))
-
-  elif input_option == "Πληκτρολόγηση ονομάτων":
-    user_input = st.text_area(
-        "Γράψτε τα ονόματα (ένα ανά γραμμή):",
-        value="Aspirin\nParacetamol\nCaffeine\nGlycidol\nEmodin",
-    )
-    input_data_list = [
-        name.strip() for name in user_input.split("\n") if name.strip()
-    ]
-
-  elif input_option == "Πληκτρολόγηση SMILES":
-    is_smiles_mode = True
-    user_input = st.text_area(
-        "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
-        value=(
-            "CC(=O)OC1=CC=CC=C1C(=O)O\n"
-            "CC(=O)NC1=CC=C(C=C1)O\n"
-            "C1CO1CO\n"
-            "CC1=CC2=C(C(=C1)O)C(=O)C3=C(C2=O)C=C(C=C3O)O"
+  with st.form("admet_input_form"):
+    input_option = st.radio(
+        "Επιλέξτε τρόπο εισαγωγής μορίων:",
+        (
+            "Δοκιμή με έτοιμα ονόματα",
+            "Πληκτρολόγηση ονομάτων",
+            "Πληκτρολόγηση SMILES",
+            "Ανέβασμα αρχείου ονομάτων",
+            "Ανέβασμα αρχείου SMILES",
         ),
     )
-    input_data_list = [
-        smi.strip() for smi in user_input.split("\n") if smi.strip()
-    ]
 
-  elif input_option == "Ανέβασμα αρχείου ονομάτων":
-    uploaded_file = st.file_uploader(
-        "Ανεβάστε αρχείο (CSV ή TXT):", type=["csv", "txt"]
+    user_text_input = ""
+    uploaded_file = None
+
+    if input_option == "Δοκιμή με έτοιμα ονόματα":
+      st.write(
+          "Δοκιμαστική λίστα:"
+          " Aspirin, Paracetamol, Caffeine, Glycidol, Emodin, Nitrobenzene"
+      )
+
+    elif input_option == "Πληκτρολόγηση ονομάτων":
+      user_text_input = st.text_area(
+          "Γράψτε τα ονόματα (ένα ανά γραμμή):",
+          value="Aspirin\nParacetamol\nCaffeine\nGlycidol\nEmodin",
+      )
+
+    elif input_option == "Πληκτρολόγηση SMILES":
+      user_text_input = st.text_area(
+          "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
+          value=(
+              "CC(=O)OC1=CC=CC=C1C(=O)O\n"
+              "CC(=O)NC1=CC=C(C=C1)O\n"
+              "C1CO1CO\n"
+              "CC1=CC2=C(C(=C1)O)C(=O)C3=C(C2=O)C=C(C=C3O)O"
+          ),
+      )
+
+    elif input_option == "Ανέβασμα αρχείου ονομάτων":
+      uploaded_file = st.file_uploader(
+          "Ανεβάστε αρχείο (CSV ή TXT):", type=["csv", "txt"]
+      )
+
+    else:  # Ανέβασμα αρχείου SMILES
+      uploaded_file = st.file_uploader(
+          "Ανεβάστε αρχείο SMILES (CSV ή TXT):", type=["csv", "txt"]
+      )
+
+    submitted = st.form_submit_button(
+        "Εκτέλεση ADMET & Toxicity Screening", type="primary"
     )
-    if uploaded_file is not None:
-      try:
-        if uploaded_file.name.endswith(".csv"):
-          df_upload = pd.read_csv(uploaded_file)
-          col_name = (
-              "Name" if "Name" in df_upload.columns else df_upload.columns[0]
-          )
-          input_data_list = (
-              df_upload[col_name].dropna().astype(str).tolist()
-          )
-        else:
-          stringdata = uploaded_file.getvalue().decode("utf-8")
-          input_data_list = [
-              line.strip() for line in stringdata.splitlines() if line.strip()
-          ]
-        st.success(
-            f"Επιτυχής φόρτωση {len(input_data_list)} εγγραφών από το αρχείο!"
-        )
-      except Exception as e:
-        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
 
-  else:  # Ανέβασμα αρχείου SMILES
-    is_smiles_mode = True
-    uploaded_file = st.file_uploader(
-        "Ανεβάστε αρχείο SMILES (CSV ή TXT):", type=["csv", "txt"]
-    )
-    if uploaded_file is not None:
-      try:
-        if uploaded_file.name.endswith(".csv"):
-          df_upload = pd.read_csv(uploaded_file)
-          col_name = (
-              "SMILES"
-              if "SMILES" in df_upload.columns
-              else df_upload.columns[0]
-          )
-          input_data_list = (
-              df_upload[col_name].dropna().astype(str).tolist()
-          )
-        else:
-          stringdata = uploaded_file.getvalue().decode("utf-8")
-          input_data_list = [
-              line.strip() for line in stringdata.splitlines() if line.strip()
-          ]
-        st.success(
-            f"Επιτυχής φόρτωση {len(input_data_list)} SMILES από το αρχείο!"
-        )
-      except Exception as e:
-        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+  # --- ΕΠΕΞΕΡΓΑΣΙΑ ΜΕΤΑ ΤΗΝ ΥΠΟΒΟΛΗ ΤΗΣ ΦΟΡΜΑΣ ---
+  if submitted:
+    input_data_list = []
+    is_smiles_mode = False
 
-  if st.button("Εκτέλεση ADMET & Toxicity Screening", type="primary"):
+    if input_option == "Δοκιμή με έτοιμα ονόματα":
+      input_data_list = [
+          "Aspirin",
+          "Paracetamol",
+          "Caffeine",
+          "Glycidol",
+          "Emodin",
+          "Nitrobenzene",
+      ]
+
+    elif input_option == "Πληκτρολόγηση ονομάτων":
+      input_data_list = [
+          name.strip() for name in user_text_input.split("\n") if name.strip()
+      ]
+
+    elif input_option == "Πληκτρολόγηση SMILES":
+      is_smiles_mode = True
+      input_data_list = [
+          smi.strip() for smi in user_text_input.split("\n") if smi.strip()
+      ]
+
+    elif input_option in [
+        "Ανέβασμα αρχείου ονομάτων",
+        "Ανέβασμα αρχείου SMILES",
+    ]:
+      if "SMILES" in input_option:
+        is_smiles_mode = True
+
+      if uploaded_file is not None:
+        try:
+          if uploaded_file.name.endswith(".csv"):
+            df_upload = pd.read_csv(uploaded_file)
+            col_name = (
+                df_upload.columns[0]
+                if len(df_upload.columns) > 0
+                else "Name"
+            )
+            input_data_list = (
+                df_upload[col_name].dropna().astype(str).tolist()
+            )
+          else:
+            stringdata = uploaded_file.getvalue().decode("utf-8")
+            input_data_list = [
+                line.strip() for line in stringdata.splitlines() if line.strip()
+            ]
+        except Exception as e:
+          st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+
     if not input_data_list:
-      st.warning("Παρακαλώ εισάγετε ή ανεβάστε δεδομένα.")
+      st.warning(
+          "Παρακαλώ εισάγετε δεδομένα ή ανεβάστε ένα έγκυρο αρχείο πριν την"
+          " εκτέλεση."
+      )
     else:
       results = []
       not_found = []
       progress_bar = st.progress(0)
 
-      # Φόρτωση καταλόγου PAINS (A, B, C)
+      params = FilterCatalogParams()
+      params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
+      catalog = FilterCatalog(params)
+
+      for i, item in enumerate(input_data_list):
+        if is_smiles_mode:
+          smi = item
+          display_name = item
+        else:
+          display_name = item
+          smi = get_smiles_from_pubchem(item)
+
+        if smi is None:
+          not_found.append(display_name)
+          progress_bar.progress((i + 1) / len(input_data_list))
+          continue
+
+        mol = Chem.MolFromSmiles(smi)
+        if mol is None:
+          not_found.append(display_name)
+          progress_bar.progress((i + 1) / len(input_data_list))
+          continue
+
+        esol = calculate_esol(mol)
+        sol_class = classify_solubility(esol)
+
+        pains_matches = catalog.GetMatches(mol)
+        pains_descriptions = [m.GetDescription() for m in pains_matches]
+
+        alerts = check_structural_alerts(mol)
+
+        failure_reasons = []
+        if pains_descriptions:
+          failure_reasons.append(f"PAINS: {', '.join(pains_descriptions)}")
+        if alerts:
+          failure_reasons.append(f"Alerts: {', '.join(alerts)}")
+
+        if failure_reasons:
+          toxicity_status = " | ".join(failure_reasons)
+        else:
+          toxicity_status = "Safe (No Alerts)"
+
+        results.append({
+            "Όνομα / SMILES": display_name,
+            "SMILES": smi,
+            "LogS (ESOL)": round(esol, 2),
+            "Κατηγορία Διαλυτότητας": sol_class,
+            "PAINS Match": (
+                ", ".join(pains_descriptions)
+                if pains_descriptions
+                else "None detected"
+            ),
+            "Reactive Alerts": (
+                ", ".join(alerts) if alerts else "None detected"
+            ),
+            "Συνολική Κατάσταση": toxicity_status,
+        })
+
+        progress_bar.progress((i + 1) / len(input_data_list))
+
+      if not_found:
+        st.warning(
+            f"Δεν βρέθηκαν ή δεν ήταν έγκυρα τα εξής: {', '.join(not_found)}"
+        )
+
+      if results:
+        st.session_state.admet_results = results
+        st.rerun()
+
+# ==========================================
+# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
+# ==========================================
+else:
+  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
+    st.session_state.admet_results = None
+    st.rerun()
+
+  df_results = pd.DataFrame(st.session_state.admet_results)
+
+  # --- KPI METRICS ---
+  total_mols = len(df_results)
+  safe_mols = len(
+      df_results[df_results["Συνολική Κατάσταση"].str.contains("Safe")]
+  )
+  alert_mols = total_mols - safe_mols
+
+  col1, col2, col3 = st.columns(3)
+  col1.metric("Συνολικά Μόρια", total_mols)
+  col2.metric("Ασφαλή (No Alerts)", safe_mols)
+  col3.metric("Alerts / PAINS", alert_mols)
+
+  st.markdown("---")
+
+  st.subheader("📊 Αποτελέσματα ADMET & Toxicity Screening")
+  st.info(
+      "**Οδηγός LogS (ESOL):** Τιμές > 0 (Highly Soluble), -2 έως 0 (Very"
+      " Soluble), -4 έως -2 (Soluble), -6 έως -4 (Moderately Soluble), < -6"
+      " (Poorly Soluble / Insoluble)."
+  )
+
+  df_display = df_results.drop(columns=["SMILES"])
+
+  styled_df = df_display.style.apply(highlight_admet, axis=1).format(
+      {"LogS (ESOL)": "{:.2f}"}
+  )
+
+  st.dataframe(styled_df, use_container_width=True)
+
+  # --- ΛΗΨΗ ΑΡΧΕΙΟΥ ---
+  st.markdown("### 📥 Λήψη Αποτελεσμάτων ADMET")
+  file_format = st.radio(
+      "Επιλέξτε μορφή αρχείου για λήψη:",
+      options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
+      horizontal=True,
+      key="download_format_radio_admet",
+  )
+
+  if file_format == "CSV (.csv)":
+    file_data = df_display.to_csv(index=False).encode("utf-8")
+    file_name = "admet_results.csv"
+    mime_type = "text/csv"
+
+  elif file_format == "Text (.txt)":
+    file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
+    file_name = "admet_results.txt"
+    mime_type = "text/plain"
+
+  elif file_format == "Excel (.xlsx)":
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+      df_display.to_excel(writer, index=False, sheet_name="ADMET_Results")
+    file_data = buffer.getvalue()
+    file_name = "admet_results.xlsx"
+    mime_type = (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+  st.download_button(
+      label=f"⬇️ Λήψη αρχείου ({file_name})",
+      data=file_data,
+      file_name=file_name,
+      mime=mime_type,
+      type="primary",
+  )
