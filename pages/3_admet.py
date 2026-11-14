@@ -12,8 +12,8 @@ render_navbar()
 # --- ΕΠΙΚΕΦΑΛΙΔΑ & ΠΕΡΙΓΡΑΦΗ ---
 st.title("🧪 ADMET & Toxicity Screener")
 st.write(
-    "Αξιολόγηση υδατικής διαλυτότητας (ESOL), σάρωση PAINS filters και ανίχνευση"
-    " δραστικών/τοξικών χημικών ομάδων (Toxicophores)."
+    "Αξιολόγηση υδατικής διαλυτότητας (ESOL), σάρωση PAINS filters με λεπτομερείς"
+    " περιγραφές και ανίχνευση δραστικών/τοξικών χημικών ομάδων (Toxicophores)."
 )
 st.markdown("---")
 
@@ -133,7 +133,7 @@ if st.session_state.admet_results is None:
   elif input_option == "Πληκτρολόγηση ονομάτων":
     user_input = st.text_area(
         "Γράψτε τα ονόματα (ένα ανά γραμμή):",
-        value="Aspirin\nParacetamol\nCaffeine\nGlycidol",
+        value="Aspirin\nParacetamol\nCaffeine\nGlycidol\nEmodin",
     )
     input_data_list = [
         name.strip() for name in user_input.split("\n") if name.strip()
@@ -216,136 +216,3 @@ if st.session_state.admet_results is None:
       progress_bar = st.progress(0)
 
       # Φόρτωση καταλόγου PAINS (A, B, C)
-      params = FilterCatalogParams()
-      params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
-      catalog = FilterCatalog(params)
-
-      for i, item in enumerate(input_data_list):
-        if is_smiles_mode:
-          smi = item
-          display_name = item
-        else:
-          display_name = item
-          smi = get_smiles_from_pubchem(item)
-
-        if smi is None:
-          not_found.append(display_name)
-          progress_bar.progress((i + 1) / len(input_data_list))
-          continue
-
-        mol = Chem.MolFromSmiles(smi)
-        if mol is None:
-          not_found.append(display_name)
-          progress_bar.progress((i + 1) / len(input_data_list))
-          continue
-
-        # Υπολογισμοί ADMET
-        esol = calculate_esol(mol)
-        sol_class = classify_solubility(esol)
-        has_pains = catalog.HasMatch(mol)
-        alerts = check_structural_alerts(mol)
-
-        # Συνολική Κατάσταση
-        if has_pains or len(alerts) > 0:
-          toxicity_status = "Alert / PAINS Match"
-        else:
-          toxicity_status = "Safe (No Alerts)"
-
-        results.append({
-            "Όνομα / SMILES": display_name,
-            "SMILES": smi,
-            "LogS (ESOL)": round(esol, 2),
-            "Κατηγορία Διαλυτότητας": sol_class,
-            "PAINS Match": "Yes" if has_pains else "No",
-            "Reactive Alerts": (
-                ", ".join(alerts) if alerts else "None detected"
-            ),
-            "Συνολική Κατάσταση": toxicity_status,
-        })
-
-        progress_bar.progress((i + 1) / len(input_data_list))
-
-      if not_found:
-        st.warning(
-            f"Δεν βρέθηκαν ή δεν ήταν έγκυρα τα εξής: {', '.join(not_found)}"
-        )
-
-      if results:
-        st.session_state.admet_results = results
-        st.rerun()
-
-# ==========================================
-# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
-# ==========================================
-else:
-  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
-    st.session_state.admet_results = None
-    st.rerun()
-
-  df_results = pd.DataFrame(st.session_state.admet_results)
-
-  # --- KPI METRICS ---
-  total_mols = len(df_results)
-  safe_mols = len(
-      df_results[df_results["Συνολική Κατάσταση"].str.contains("Safe")]
-  )
-  alert_mols = total_mols - safe_mols
-
-  col1, col2, col3 = st.columns(3)
-  col1.metric("Συνολικά Μόρια", total_mols)
-  col2.metric("Ασφαλή (No Alerts)", safe_mols)
-  col3.metric("Alerts / PAINS", alert_mols)
-
-  st.markdown("---")
-
-  st.subheader("📊 Αποτελέσματα ADMET & Toxicity Screening")
-  st.info(
-      "**Οδηγός LogS (ESOL):** Τιμές > 0 (Highly Soluble), -2 έως 0 (Very"
-      " Soluble), -4 έως -2 (Soluble), -6 έως -4 (Moderately Soluble), < -6"
-      " (Poorly Soluble / Insoluble)."
-  )
-
-  df_display = df_results.drop(columns=["SMILES"])
-
-  styled_df = df_display.style.apply(highlight_admet, axis=1).format(
-      {"LogS (ESOL)": "{:.2f}"}
-  )
-
-  st.dataframe(styled_df, use_container_width=True)
-
-  # --- ΛΗΨΗ ΑΡΧΕΙΟΥ ---
-  st.markdown("### 📥 Λήψη Αποτελεσμάτων ADMET")
-  file_format = st.radio(
-      "Επιλέξτε μορφή αρχείου για λήψη:",
-      options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
-      horizontal=True,
-      key="download_format_radio_admet",
-  )
-
-  if file_format == "CSV (.csv)":
-    file_data = df_display.to_csv(index=False).encode("utf-8")
-    file_name = "admet_results.csv"
-    mime_type = "text/csv"
-
-  elif file_format == "Text (.txt)":
-    file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
-    file_name = "admet_results.txt"
-    mime_type = "text/plain"
-
-  elif file_format == "Excel (.xlsx)":
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-      df_display.to_excel(writer, index=False, sheet_name="ADMET_Results")
-    file_data = buffer.getvalue()
-    file_name = "admet_results.xlsx"
-    mime_type = (
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-  st.download_button(
-      label=f"⬇️ Λήψη αρχείου ({file_name})",
-      data=file_data,
-      file_name=file_name,
-      mime=mime_type,
-      type="primary",
-  )
