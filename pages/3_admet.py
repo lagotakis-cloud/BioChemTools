@@ -1,8 +1,9 @@
 import io
 import pandas as pd
+import plotly.express as px
 import pubchempy as pcp
 from rdkit import Chem
-from rdkit.Chem import Descriptors
+from rdkit.Chem import Descriptors, Draw
 from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
 import streamlit as st
 from components import render_navbar
@@ -10,10 +11,10 @@ from components import render_navbar
 render_navbar()
 
 # --- ΕΠΙΚΕΦΑΛΙΔΑ & ΠΕΡΙΓΡΑΦΗ ---
-st.title("🧪 ADMET & Toxicity Screener")
+st.title("🧪 ADMET & Toxicity Screener (Enterprise Edition)")
 st.write(
-    "Αξιολόγηση υδατικής διαλυτότητας (ESOL), σάρωση PAINS filters με λεπτομερείς"
-    " περιγραφές και ανίχνευση δραστικών/τοξικών χημικών ομάδων (Toxicophores)."
+    "Προηγμένη αξιολόγηση υδατικής διαλυτότητας (ESOL), μεταβολισμού CYP450,"
+    " σάρωση PAINS, τοξικών alerts και αυτόματη 2D απεικόνιση δομών."
 )
 st.markdown("---")
 
@@ -82,23 +83,41 @@ def check_structural_alerts(mol):
   return found_alerts
 
 
-def highlight_admet(row):
-  styles = [""] * len(row)
-  status_idx = row.index.get_loc("Συνολική Κατάσταση")
-  name_idx = row.index.get_loc("Όνομα / SMILES")
+def check_cyp450_inhibition(mol):
+  """Εκτίμηση πιθανής αναστολής ηπατικών ενζύμων CYP450 μέσω υποδομών."""
+  cyp_patterns = {
+      "CYP3A4 Inhibitor Motif": "c1ccccc1[NX3](C)C",  # Ενδεικτικά αρωματικά αζώτα
+      "CYP2D6 Inhibitor Motif": "[NX3](C)(C)CCC",
+      "CYP2C9 Inhibitor Motif": "c1ccc(cc1)C(=O)O",
+  }
+  inhibited = []
+  for name, smarts in cyp_patterns.items():
+    pat = Chem.MolFromSmarts(smarts)
+    if pat and mol.HasSubstructMatch(pat):
+      inhibited.append(name.split()[0])  # Κρατάει CYP3A4, κλπ.
+  return inhibited if inhibited else ["Low Risk"]
 
-  if "Safe" in str(row["Συνολική Κατάσταση"]):
-    color_style = (
-        "background-color: #d4edda; color: #155724; font-weight: bold;"
-    )
-  else:
-    color_style = (
-        "background-color: #f8d7da; color: #721c24; font-weight: bold;"
-    )
 
-  styles[name_idx] = color_style
-  styles[status_idx] = color_style
-  return styles
+def mol_to_svg(mol, size=(120, 120)):
+  """Μετατροπή μορίου RDKit σε καθαρό HTML SVG string για το dataframe."""
+  if mol is None:
+    return ""
+  try:
+    # Χρήση SVG για τέλεια ευκρίνεια στα DataFrames
+    from rdkit.Chem.Draw import rdMolDraw2D
+    import svgwrite  # fallback or direct drawing
+
+    drawer = rdMolDraw2D.MolDraw2DSVG(size[0], size[1])
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText()
+    # Κωδικοποίηση σε data URI για απευθείας εμφάνιση σε markdown/dataframe
+    import base64
+
+    b64 = base64.b64encode(svg.encode("utf-8")).decode("utf-8")
+    return f'<img src="data:image/svg+xml;base64,{b64}" width="{size[0]}" height="{size[1]}"/>'
+  except Exception:
+    return ""
 
 
 # ==========================================
@@ -154,10 +173,10 @@ if st.session_state.admet_results is None:
       )
 
     submitted = st.form_submit_button(
-        "Εκτέλεση ADMET & Toxicity Screening", type="primary"
+        "Εκτέλεση Enterprise ADMET Screening", type="primary"
     )
 
-  # --- ΕΠΕΞΕΡΓΑΣΙΑ ΜΕΤΑ ΤΗΝ ΥΠΟΒΟΛΗ ΤΗΣ ΦΟΡΜΑΣ ---
+  # --- ΕΠΕΞΕΡΓΑΣΙΑ ΜΕΤΑ ΤΗΝ ΥΠΟΒΟΛΗ ---
   if submitted:
     input_data_list = []
     is_smiles_mode = False
@@ -211,10 +230,7 @@ if st.session_state.admet_results is None:
           st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
 
     if not input_data_list:
-      st.warning(
-          "Παρακαλώ εισάγετε δεδομένα ή ανεβάστε ένα έγκυρο αρχείο πριν την"
-          " εκτέλεση."
-      )
+      st.warning("Παρακαλώ εισάγετε δεδομένα πριν την εκτέλεση.")
     else:
       results = []
       not_found = []
@@ -243,13 +259,26 @@ if st.session_state.admet_results is None:
           progress_bar.progress((i + 1) / len(input_data_list))
           continue
 
+        # Υπολογισμοί
         esol = calculate_esol(mol)
         sol_class = classify_solubility(esol)
-
         pains_matches = catalog.GetMatches(mol)
         pains_descriptions = [m.GetDescription() for m in pains_matches]
-
         alerts = check_structural_alerts(mol)
+        cyp_inhibitions = check_cyp450_inhibition(mol)
+
+        # Υπολογισμός ADMET Score (0 - 100%)
+        # Ξεκινάμε από 100% και αφαιρούμε ποσοστά ανάλογα με τα προβλήματα
+        score = 100
+        if pains_descriptions:
+          score -= 40
+        score -= len(alerts) * 25
+        if "Insoluble" in sol_class or "Poorly" in sol_class:
+          score -= 15
+        score = max(0, score)
+
+        # 2D Structure Image HTML
+        svg_html = mol_to_svg(mol)
 
         failure_reasons = []
         if pains_descriptions:
@@ -263,10 +292,13 @@ if st.session_state.admet_results is None:
           toxicity_status = "Safe (No Alerts)"
 
         results.append({
+            "Δομή (2D)": svg_html,
             "Όνομα / SMILES": display_name,
             "SMILES": smi,
+            "ADMET Score (%)": score,
             "LogS (ESOL)": round(esol, 2),
-            "Κατηγορία Διαλυτότητας": sol_class,
+            "Διαλυτότητα": sol_class,
+            "CYP450 Profile": ", ".join(cyp_inhibitions),
             "PAINS Match": (
                 ", ".join(pains_descriptions)
                 if pains_descriptions
@@ -305,31 +337,52 @@ else:
       df_results[df_results["Συνολική Κατάσταση"].str.contains("Safe")]
   )
   alert_mols = total_mols - safe_mols
+  avg_score = round(df_results["ADMET Score (%)"].mean(), 1)
 
-  col1, col2, col3 = st.columns(3)
+  col1, col2, col3, col4 = st.columns(4)
   col1.metric("Συνολικά Μόρια", total_mols)
   col2.metric("Ασφαλή (No Alerts)", safe_mols)
   col3.metric("Alerts / PAINS", alert_mols)
+  col4.metric("Μέσος ADMET Score", f"{avg_score}%")
 
   st.markdown("---")
 
-  st.subheader("📊 Αποτελέσματα ADMET & Toxicity Screening")
-  st.info(
-      "**Οδηγός LogS (ESOL):** Τιμές > 0 (Highly Soluble), -2 έως 0 (Very"
-      " Soluble), -4 έως -2 (Soluble), -6 έως -4 (Moderately Soluble), < -6"
-      " (Poorly Soluble / Insoluble)."
+  # --- VISUAL SCORECARD (PLOTLY BAR CHART) ---
+  st.subheader("📈 ADMET Score & Safety Overview")
+  fig = px.bar(
+      df_results,
+      x="Όνομα / SMILES",
+      y="ADMET Score (%)",
+      color="ADMET Score (%)",
+      color_continuous_scale=["red", "orange", "green"],
+      range_y=[0, 100],
+      title="Συνολική Βαθμολογία Ασφάλειας & Φαρμακευτικότητας Μορίων",
   )
+  fig.update_layout(
+      plot_bgcolor="rgba(0,0,0,0)",
+      paper_bgcolor="rgba(0,0,0,0)",
+      font=dict(family="sans serif", size=12),
+  )
+  st.plotly_chart(fig, use_container_width=True)
 
+  st.markdown("---")
+  st.subheader("📊 Αναλυτικός Πίνακας ADMET")
+
+  # Προετοιμασία DataFrame για εμφάνιση (κρύβουμε το RAW SMILES)
   df_display = df_results.drop(columns=["SMILES"])
 
-  styled_df = df_display.style.apply(highlight_admet, axis=1).format(
-      {"LogS (ESOL)": "{:.2f}"}
+  # Εμφάνιση πίνακα με υποστήριξη HTML (για τις εικόνες SVG)
+  st.write(
+      df_display.to_html(escape=False, index=False), unsafe_allow_html=True
   )
 
-  st.dataframe(styled_df, use_container_width=True)
-
   # --- ΛΗΨΗ ΑΡΧΕΙΟΥ ---
+  st.markdown("---")
   st.markdown("### 📥 Λήψη Αποτελεσμάτων ADMET")
+
+  # Για το export αφαιρούμε το SVG tag ώστε να είναι καθαρό το αρχείο
+  df_export = df_display.drop(columns=["Δομή (2D)"])
+
   file_format = st.radio(
       "Επιλέξτε μορφή αρχείου για λήψη:",
       options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
@@ -338,19 +391,19 @@ else:
   )
 
   if file_format == "CSV (.csv)":
-    file_data = df_display.to_csv(index=False).encode("utf-8")
+    file_data = df_export.to_csv(index=False).encode("utf-8")
     file_name = "admet_results.csv"
     mime_type = "text/csv"
 
   elif file_format == "Text (.txt)":
-    file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
+    file_data = df_export.to_csv(sep="\t", index=False).encode("utf-8")
     file_name = "admet_results.txt"
     mime_type = "text/plain"
 
   elif file_format == "Excel (.xlsx)":
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-      df_display.to_excel(writer, index=False, sheet_name="ADMET_Results")
+      df_export.to_excel(writer, index=False, sheet_name="ADMET_Results")
     file_data = buffer.getvalue()
     file_name = "admet_results.xlsx"
     mime_type = (
