@@ -6,6 +6,7 @@ from rdkit.Chem import Descriptors
 from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
 import streamlit as st
 from components import render_navbar
+from components import render_footer
 
 st.set_page_config(
     page_title="ADMET & Toxicity Screener | BiochemTools",
@@ -489,3 +490,5 @@ However, computational ADMET predictions are screening guidelines rather than de
 - Delaney, J. S. (2004). ESOL: Estimating aqueous solubility directly from molecular structure. *Journal of Chemical Information and Computer Sciences, 44*(3), 1000–1005.
 - Baell, J. B., & Holloway, G. A. (2010). New substructure filters for removal of pan assay interference compounds (PAINS) from screening libraries. *Journal of Medicinal Chemistry, 53*(7), 2719–2740.
 """)
+
+render_footer()
