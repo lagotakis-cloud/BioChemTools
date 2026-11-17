@@ -5,6 +5,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 import streamlit as st
 from components import render_navbar
+from components import render_footer
 
 st.set_page_config(
     page_title="Veber's Rules Checker | BiochemTools",
@@ -354,4 +355,4 @@ Veber's rules serve as an invaluable early-stage filter for molecular optimizati
 Veber, D. F., Johnson, S. R., Cheng, H. Y., Smith, B. R., Ward, K. W., & Kopple, K. D. (2002). Molecular properties that influence oral bioavailability and drug likeness of candidates. *Journal of Medicinal Chemistry, 45*(12), 2615–2623.
 """)
 
-
+render_footer()
