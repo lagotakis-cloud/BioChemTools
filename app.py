@@ -29,9 +29,9 @@ with c1:
     st.markdown("Evaluate drug-likeness and core physicochemical properties.")
     st.page_link("pages/1_lipinski.py", label="Open Lipinski", icon="💊")
 
-    st.markdown("#### 3. Enterprise ADMET")
+    st.markdown("#### 3. Simple ADMET")
     st.markdown(
-        "Advanced ADMET screening, ESOL, PAINS, CYP450, and toxicity alerts."
+        "Simple ADMET screening, ESOL, PAINS, CYP450, and toxicity alerts."
     )
     st.page_link("pages/3_admet.py", label="Open ADMET", icon="🛡️")
 
