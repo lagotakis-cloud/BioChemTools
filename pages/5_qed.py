@@ -1,4 +1,5 @@
 import io
+import pandas as pd
 import pubchempy as pcp
 from rdkit import Chem
 from rdkit.Chem import Descriptors
@@ -15,9 +16,8 @@ render_navbar()
 
 st.title("📈 QED (Quantitative Estimate of Drug-Likeness)")
 st.markdown(
-    "Υπολογισμός του σύγχρονου αριθμητικού δείκτη QED (από 0 έως 1) που"
-    " αξιολογεί τη συνολική φαρμακευτική ελκυστικότητα ενός μορίου βάσει"
-    " πολλαπλών φυσικοχημικών ιδιοτήτων."
+    "Υπολογισμός του σύγχρονου αριθμητικού δείκτη QED (από 0 έως 1) για την"
+    " εκτίμηση της φαρμακευτικής ελκυστικότητας."
 )
 st.markdown("---")
 
@@ -90,21 +90,18 @@ else:
   st.markdown("---")
   c1, c2 = st.columns([1, 2])
   with c1:
+    from rdkit.Chem import Draw
+
     img = Draw.MolToImage(mol, size=(300, 300))
     st.image(img, use_container_width=True)
   with c2:
     st.subheader("📊 Ερμηνεία Δείκτη QED")
     if score >= 0.67:
-      st.success(
-          "✨ **Υψηλή φαρμακευτική ελκυστικότητα** (Drug-like properties)."
-      )
+      st.success("✨ **Υψηλή φαρμακευτική ελκυστικότητα** (Drug-like).")
     elif score >= 0.35:
       st.info("ℹ️ **Μέτρια φαρμακευτική ελκυστικότητα**.")
     else:
-      st.warning(
-          "⚠️ **Χαμηλή φαρμακευτική ελκυστικότητα** (πιθανές προκλήσεις σε"
-          " ADME)."
-      )
+      st.warning("⚠️ **Χαμηλή φαρμακευτική ελκυστικότητα**.")
 
     df_out = pd.DataFrame([{
         "Molecule": res["molecule_name"],
