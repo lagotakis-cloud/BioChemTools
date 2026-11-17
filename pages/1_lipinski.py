@@ -5,6 +5,7 @@ from rdkit import Chem
 from rdkit.Chem import Crippen, Descriptors
 import streamlit as st
 from components import render_navbar
+from components import render_footer
 
 # --- TITLE & DESCRIPTION ---
 st.set_page_config(
@@ -351,3 +352,4 @@ The results should therefore be interpreted alongside additional physicochemical
 
 Lipinski, C. A., Lombardo, F., Dominy, B. W., & Feeney, P. J. (2001). Experimental and computational approaches to estimate solubility and permeability in drug discovery and development settings. *Advanced Drug Delivery Reviews, 46*(1–3), 3–26.
 """)
+render_footer()
