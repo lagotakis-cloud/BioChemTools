@@ -1,8 +1,8 @@
 import io
+import pandas as pd
 import pubchempy as pcp
 from rdkit import Chem
 from rdkit.Chem import Draw
-import pandas as pd
 import streamlit as st
 
 st.set_page_config(
@@ -15,8 +15,8 @@ render_navbar()
 
 st.title("🔤 Name ⇄ SMILES Bidirectional & Batch Converter")
 st.markdown(
-    "Αμφίδρομη μετατροπή μεταξύ Ονομάτων Χημικών Ενώσεων και SMILES strings,"
-    " με δυνατότητα μαζικής επεξεργασίας (batch) μέσω αρχείου ή λίστας."
+    "Αμφίδρομη μετατροπή ονομάτων χημικών ενώσεων και SMILES strings με"
+    " δυνατότητα μαζικής επεξεργασίας."
 )
 st.markdown("---")
 
@@ -33,21 +33,17 @@ if st.session_state.name_smiles_results is None:
             "Μαζική Επεξεργασία (Batch από Αρχείο CSV/TXT)",
         ),
     )
-
     single_input = st.text_input(
         "Εισάγετε τιμή (για μεμονωμένη μετατροπή):", "Paracetamol"
     )
     uploaded_file = st.file_uploader(
-        "Ή ανεβάστε αρχείο για batch μετατροπή (.csv ή .txt με 1 στήλη):",
+        "Ή ανεβάστε αρχείο για batch μετατροπή (.csv ή .txt):",
         type=["csv", "txt"],
     )
-
     submitted = st.form_submit_button("Εκτέλεση Μετατροπής", type="primary")
 
   if submitted:
     results_list = []
-
-    # Περίπτωση 1: Batch Upload
     if uploaded_file is not None:
       try:
         if uploaded_file.name.endswith(".csv"):
@@ -60,7 +56,7 @@ if st.session_state.name_smiles_results is None:
           ]
 
         for item in items:
-          if "Όνομα" in conversion_mode or "Όνομα Μορίου" in conversion_mode:
+          if "Όνομα" in conversion_mode:
             try:
               comps = pcp.get_compounds(item, "name")
               smi = comps[0].canonical_smiles if comps else "Not Found"
@@ -73,15 +69,10 @@ if st.session_state.name_smiles_results is None:
             results_list.append({"Input": item, "Canonical_SMILES": smi})
 
         df_res = pd.DataFrame(results_list)
-        st.session_state.name_smiles_results = {
-            "type": "batch",
-            "df": df_res,
-        }
+        st.session_state.name_smiles_results = {"type": "batch", "df": df_res}
         st.rerun()
       except Exception as e:
         st.error(f"Σφάλμα ανάγνωσης αρχείου: {e}")
-
-    # Περίπτωση 2: Single Input
     else:
       if not single_input.strip():
         st.warning("Παρακαλώ εισάγετε μια τιμή.")
@@ -97,7 +88,6 @@ if st.session_state.name_smiles_results is None:
                   "input": single_input,
                   "output": smi,
                   "mol": mol,
-                  "mode": "name_to_smi",
               }
               st.rerun()
             else:
@@ -113,19 +103,16 @@ if st.session_state.name_smiles_results is None:
                 "input": single_input,
                 "output": smi,
                 "mol": mol,
-                "mode": "smi_to_smi",
             }
             st.rerun()
           else:
             st.error("Μη έγκυρο SMILES string.")
-
 else:
   if st.button("🔄 Νέα Μετατροπή"):
     st.session_state.name_smiles_results = None
     st.rerun()
 
   res = st.session_state.name_smiles_results
-
   if res["type"] == "single":
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -137,7 +124,6 @@ else:
       st.subheader("📊 Αποτελέσματα Μετατροπής")
       st.text_input("Αρχική Είσοδος", value=res["input"])
       st.text_input("Παραγόμενο SMILES", value=res["output"])
-
       csv_data = pd.DataFrame(
           [{"Input": res["input"], "Output": res["output"]}]
       ).to_csv(index=False)
@@ -152,7 +138,6 @@ else:
     st.subheader("📊 Αποτελέσματα Μαζικής Μετατροπής (Batch)")
     df = res["df"]
     st.dataframe(df, use_container_width=True)
-
     csv_data = df.to_csv(index=False).encode("utf-8")
     st.download_button(
         "⬇️ Λήψη ολόκληρης λίστας (CSV)",
