@@ -16,7 +16,7 @@ st.set_page_config(
 render_navbar()
 
 # --- TITLE & DESCRIPTION ---
-st.title("ADMET & Toxicity Screener (Enterprise Edition)")
+st.title("Simple ADMET Screener")
 st.markdown("---")
 
 # --- INITIALIZE SESSION STATE ---
@@ -444,5 +444,48 @@ else:
 st.markdown("""
 ### What is ADMET & Toxicity Screening?
 
-Evaluating **ADMET** (Absorption, Distribution, Metabolism, Excretion, and Toxicity) properties early in drug discovery is critical to reducing late-stage clinical attrition.
+In modern drug discovery and development, evaluating **ADMET** (Absorption, Distribution, Metabolism, Excretion, and Toxicity) properties early in the pipeline is critical to reducing late-stage clinical attrition. 
+
+While a molecule may exhibit strong binding affinity to a biological target, it must also be able to safely reach that target within the human body without causing adverse toxicological effects. The core components of ADMET comprise:
+
+- **Absorption:** How a drug candidate enters the bloodstream from the administration site.
+- **Distribution:** How it disperses throughout body tissues and crosses biological barriers (such as the Blood-Brain Barrier).
+- **Metabolism:** How the body chemically alters the compound, primarily via hepatic enzymes.
+- **Excretion:** How the compound and its metabolites are cleared from the body.
+- **Toxicity:** Identifying potential structural alerts, reactive groups, or false-positive interference compounds.
+
+### How Does This Tool Work?
+
+The **Simple ADMET Screener** allows users to evaluate chemical compounds through multiple flexible input methods:
+
+**1. Compound Name Search (PubChem)**
+Users can enter chemical names, and the tool queries the PubChem database to automatically retrieve their canonical SMILES strings.
+
+**2. Direct SMILES Input**
+Users can manually input SMILES representations for instant, database-independent evaluation.
+
+**3. File Upload**
+Users can upload `.csv` or `.txt` files containing compound names or SMILES strings to perform high-throughput batch screening in a single operation.
+
+### What Does the Tool Calculate?
+
+For each successfully processed compound, the screener performs rapid in silico evaluations and aggregates the results into a composite **ADMET Score (%)**:
+
+- **Aqueous Solubility (ESOL / LogS):** Estimates water solubility using Delaney's equation to predict oral bioavailability and formulation feasibility.
+- **CYP450 Enzyme Inhibition Profile:** Screens for structural motifs associated with the inhibition of major hepatic cytochrome P450 enzymes (e.g., CYP3A4, CYP2D6, CYP2C9), which are frequent causes of drug-drug interactions.
+- **PAINS Filter Integration:** Detects Pan Assay Interference Compounds using RDKit's FilterCatalog to flag molecules that frequently yield false positives in biochemical assays.
+- **Reactive Structural Alerts:** Identifies potentially toxic or reactive substructures via SMARTS patterns (such as epoxides, Michael acceptors, and nitroaromatics).
+
+### Scope, Limitations, and First-Line Triage
+
+The **Simple ADMET Screener** is deliberately designed as a **first-line triage and screening tool** for early-stage cheminformatics rather than an exhaustive, deep-learning clinical simulator (which may compute 100+ complex parameters). 
+
+By focusing on core solubility, metabolic alerts, and structural liabilities locally and securely without third-party server uploads, this tool allows researchers to rapidly filter out unviable candidates in seconds. 
+
+However, computational ADMET predictions are screening guidelines rather than definitive clinical outcomes. Compounds flagged with structural alerts or poor solubility should be subjected to rigorous experimental validation and broader multi-parameter profiling before advanced development.
+
+### Scientific References
+
+- Delaney, J. S. (2004). ESOL: Estimating aqueous solubility directly from molecular structure. *Journal of Chemical Information and Computer Sciences, 44*(3), 1000–1005.
+- Baell, J. B., & Holloway, G. A. (2010). New substructure filters for removal of pan assay interference compounds (PAINS) from screening libraries. *Journal of Medicinal Chemistry, 53*(7), 2719–2740.
 """)
