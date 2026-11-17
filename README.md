@@ -1,47 +1,51 @@
-# 🧬 BiochemTools (biochemtools.tech)
+# 🧬 biochemtools.tech | Enterprise Cheminformatics & In Silico Screening Suite
 
-A modern, fast, and user-friendly Cheminformatics and Drug-Likeness Screening web suite, built in Python using Streamlit and RDKit.
+**biochemtools.tech** is a modern, fast, and professional web-based cheminformatics suite designed for researchers, medicinal chemists, and students. Built with **Streamlit**, **RDKit**, **PubChemPy**, and **Pandas**, it provides robust local tools for high-throughput in silico screening, molecular property evaluation, and chemical translation.
 
----
-
-## 🛠️ Included Tools
-
-The platform is divided into independent pages, offering comprehensive molecular analysis:
-
-1. **Lipinski Rule of 5 Checker (`1_lipinski.py`)**
-   * Calculation of Molecular Weight (MW), LogP, Hydrogen Bond Donors (HBD), and Acceptors (HBA).
-   * Rule violation check and automated status classification (Passed / Failed).
-   
-2. **Veber's Rules Checker (`2_veber.py`)**
-   * Evaluation of Topological Polar Surface Area (TPSA) with a selectable threshold (≤ 140 Å² for cell membranes or ≤ 90 Å² for BBB).
-   * Molecular flexibility assessment via Rotatable Bonds (≤ 10).
-
-3. **ADMET & Toxicity Screener (`3_admet.py`)**
-   * Estimation of aqueous solubility (ESOL / LogS).
-   * PAINS filters check (Pan Assay Interference Compounds).
-   * Detection of reactive structural alerts (e.g., epoxides, Michael acceptors, etc.).
+Designed with a **"First-Line Triage"** philosophy, the platform enables secure, local, and lightning-fast preliminary screening of chemical libraries without the security risks or latency of external third-party servers.
 
 ---
 
-## 🚀 Input & Export Capabilities
-* **Multiple Input Methods:** Support for built-in sample molecules, bulk text input of Names or SMILES strings, and file uploads (`.csv` / `.txt`).
-* **Batch Processing:** Rapid analysis of multiple compounds simultaneously.
-* **Flexible Downloads:** Export clean results in **CSV**, **TXT**, or **Excel (.xlsx)** formats with built-in styling.
+## 🛠️ The 6 Core Suite Tools
+
+The platform consists of six specialized, standalone tools integrated via a seamless sticky navigation header:
+
+1. **`1_lipinski.py` (Lipinski's Rule of 5 Checker)**
+   * Evaluates core physicochemical properties (Molecular Weight, LogP, HBD, HBA) to assess oral bioavailability and drug-likeness.
+2. **`2_veber.py` (Veber's Rules & TPSA Screener)**
+   * Analyzes molecular flexibility (Rotatable Bonds) and polar surface area (TPSA) alongside Blood-Brain Barrier (BBB) potential.
+3. **`3_admet.py` (Enterprise ADMET & Toxicity Screener)**
+   * Computes aqueous solubility (ESOL/LogS), screens for Pan Assay Interference Compounds (PAINS), detects toxic structural alerts via SMARTS, and profiles hepatic CYP450 enzyme inhibition.
+4. **`4_ghose.py` (Ghose Filter Checker)**
+   * Validates molecules against comprehensive statistical ranges for MW, LogP, Molar Refractivity, and total atom count derived from clinical drug databases.
+5. **`5_qed.py` (QED Drug-Likeness Evaluator)**
+   * Calculates the continuous Quantitative Estimate of Drug-Likeness (0 to 1 score) based on desirability functions of eight fundamental properties.
+6. **`6_names_to_smiles.py` (Name ⇄ SMILES Batch Converter)**
+   * Provides high-throughput bidirectional batch translation between common/IUPAC chemical names and canonical SMILES strings via PubChem integration.
 
 ---
 
-## 📂 Project Structure
+## 🚀 Key Features
 
-```text
-biochemtools/
-│
-├── pages/
-│   ├── 1_lipinski.py       # Lipinski Rule of 5 tool
-│   ├── 2_veber.py          # Veber's Rules tool
-│   └── 3_admet.py          # ADMET & Toxicity Screener tool
-│
-├── assets/
-│   └── logo.png            # Icons and graphic assets
-│
-├── requirements.txt        # Required Python libraries
-└── README.md               # Project documentation
+- **Local & Secure Processing:** Keeps your proprietary chemical structures and compound libraries strictly private on your local machine or secure deployment environment.
+- **Flexible Data Input:** Supports single-compound name search (via PubChem), direct manual SMILES entry, and automated batch file uploads (`.csv` and `.txt`).
+- **Interactive Visual Feedback:** Dynamic KPI metrics, automated error handling, and color-coded results tables for instant molecular prioritization.
+- **Universal Export:** Instant export options (`.csv`, `.txt`, `.xlsx` via OpenPyXL) directly from generated results.
+
+---
+
+## 💻 Tech Stack
+
+- **Frontend / UI:** [Streamlit](https://streamlit.io/) (with custom CSS components & sticky dual-row navigation)
+- **Cheminformatics Engine:** [RDKit](https://www.rdkit.org/)
+- **Database & Retrieval:** [PubChemPy](https://pypi.org/project/PubChemPy/)
+- **Data Manipulation & Export:** Pandas, OpenPyXL
+
+---
+
+## ⚙️ Installation & Local Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/your-username/biochemtools.git](https://github.com/your-username/biochemtools.git)
+   cd biochemtools
