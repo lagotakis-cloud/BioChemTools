@@ -13,8 +13,7 @@ render_navbar()
 # --- HERO SECTION ---
 st.title("🧬 biochemtools.tech")
 st.markdown(
-    "### The modern, fast, and professional Cheminformatics tool suite"
-    " for In Silico Screening and Molecular Analysis."
+    "### A modern, fast, and free tool suite for drug discovery"
 )
 st.markdown("---")
 
