@@ -221,6 +221,71 @@ if st.session_state.veber_results is None:
         st.session_state.veber_results = results
         st.rerun()
 
+st.markdown("""
+## Veber Rules Calculator
+
+### What are Veber's Rules?
+
+Veber's Rules are widely used guidelines in drug discovery for evaluating the physicochemical properties of small molecules that may influence their oral bioavailability and membrane permeability.
+
+The rules were proposed by Daniel F. Veber and colleagues, based on studies investigating the relationship between molecular properties and oral bioavailability.
+
+According to the original Veber criteria, compounds are more likely to exhibit favorable oral bioavailability when they meet the following conditions:
+
+- **Rotatable Bonds (RB):** ≤ 10
+- **Topological Polar Surface Area (TPSA):** ≤ 140 Å²
+
+Alternatively, the original study also identified a relationship between oral bioavailability and the sum of hydrogen bond donors and acceptors, with a total of ≤ 12.
+
+These parameters help assess molecular flexibility and polarity, two important factors that can influence a compound's ability to cross biological membranes.
+
+### How Does This Tool Work?
+
+The **Veber Rules Calculator** allows users to evaluate chemical compounds based on their Topological Polar Surface Area (TPSA), using two different assessment modes:
+
+**1. Cell Membranes (TPSA ≤ 140 Å²)**
+
+This option evaluates compounds against a TPSA threshold of 140 Å².
+
+The threshold is based on Veber's original findings, which associated lower molecular polarity with improved oral bioavailability and the ability to permeate biological membranes.
+
+Compounds with TPSA values ≤ 140 Å² meet this particular screening criterion.
+
+**2. Blood-Brain Barrier (BBB) (TPSA ≤ 90 Å²)**
+
+This option evaluates compounds using a more restrictive TPSA threshold of 90 Å².
+
+Lower TPSA values are generally associated with a greater potential for passive penetration across the blood-brain barrier (BBB), which separates the bloodstream from the central nervous system.
+
+Compounds with TPSA values ≤ 90 Å² meet this particular screening criterion.
+
+### What Does the Tool Calculate?
+
+For each successfully processed compound, the calculator determines its TPSA and compares the calculated value against the threshold corresponding to the selected assessment mode.
+
+The results allow users to:
+
+- Review the calculated TPSA value for each compound.
+- Assess whether the compound meets the selected TPSA threshold.
+- Compare compounds based on their molecular polarity.
+- Perform an initial screening for membrane permeability or potential BBB penetration.
+
+### Scientific Interpretation and Limitations
+
+TPSA is an important molecular descriptor associated with membrane permeability and drug absorption. However, it should not be considered a standalone predictor of biological membrane penetration.
+
+Meeting the TPSA ≤ 140 Å² criterion does not guarantee favorable oral bioavailability or membrane permeability.
+
+Similarly, meeting the TPSA ≤ 90 Å² criterion does not guarantee blood-brain barrier penetration. BBB permeability is influenced by several additional factors, including molecular size, lipophilicity, hydrogen bonding, ionization state, transporter interactions, and active efflux mechanisms.
+
+The two thresholds implemented in this tool should therefore be interpreted as preliminary screening criteria rather than definitive predictors of biological activity or pharmacokinetic behavior.
+
+### Scientific Reference
+
+Veber, D. F., Johnson, S. R., Cheng, H.-Y., Smith, B. R., Ward, K. W., & Kopple, K. D. (2002). Molecular properties that influence the oral bioavailability of drug candidates. *Journal of Medicinal Chemistry, 45*(12), 2615–2623.
+""")
+
+
 # ==========================================
 # ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
 # ==========================================
