@@ -300,14 +300,49 @@ else:
 st.markdown("""
 ### What is the Ghose Filter?
 
-The **Ghose Filter** is a knowledge-based physicochemical filter introduced by Arup K. Ghose and colleagues to characterize small-molecule drug-likeness based on distributions observed across commercial pharmaceutical databases.
+The **Ghose Filter** is a foundational knowledge-based physicochemical filter introduced by Arup K. Ghose and colleagues to characterize the drug-like chemical space of small molecules. 
 
-According to the Ghose criteria, a compound falls within the drug-like chemical space when it satisfies the following ranges:
+While rules like Lipinski's focus primarily on molecular weight, lipophilicity, and hydrogen bonding, the Ghose filter broadens the evaluation framework by examining additional structural descriptors derived from comprehensive statistical analyses of commercial drug databases.
+
+According to the standard Ghose criteria, a compound is considered to fall within a favorable chemical space when its key physicochemical properties satisfy the following explicit boundaries:
 
 - **Molecular Weight (MW):** 160 – 480 Da
 - **Lipophilicity (LogP):** -0.4 – 5.6
 - **Heavy Atom Count:** 20 – 70 atoms
 - **Molar Refractivity (MR):** 40 – 130
+
+### How Does This Tool Work?
+
+The **Ghose Filter Checker** enables researchers and medicinal chemists to evaluate single or multiple chemical compounds through three flexible input mechanisms:
+
+**1. Compound Name Search (PubChem)**
+
+Users can input commercial or generic chemical names. The tool performs an automated query against the PubChem database to fetch the exact canonical SMILES and molecular representations.
+
+**2. Direct SMILES Input**
+
+Users can directly paste custom or novel SMILES strings (one per line) for rapid in silico evaluation without requiring external database lookups.
+
+**3. File Upload**
+
+Users can upload structured `.csv` files or raw `.txt` files containing lists of compound names or SMILES strings, facilitating high-throughput screening and batch analysis in seconds.
+
+### What Does the Tool Calculate?
+
+For each successfully parsed compound, the application computes the required molecular descriptors and evaluates them against the formal Ghose criteria.
+
+The resulting reports allow researchers to:
+
+- Inspect calculated physicochemical values (MW, LogP, Heavy Atoms, Molar Refractivity).
+- Instantly identify specific parameter violations.
+- Determine overall compliance through an integrated pass/fail classification.
+- Export structured reports securely in multiple standard formats (`.csv`, `.txt`, `.xlsx`).
+
+### Scientific Interpretation and Limitations
+
+The Ghose filter serves as an essential preliminary screening tool in early-stage drug discovery to filter out outlier molecules that deviate significantly from the typical physicochemical profiles of successful oral drugs. 
+
+However, like other heuristic filters, it should not be treated as an absolute predictor of biological activity or clinical success. Compounds failing one or more criteria may still possess therapeutic potential depending on specific target classes and mechanisms of action.
 
 ### Scientific Reference
 
