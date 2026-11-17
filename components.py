@@ -58,11 +58,11 @@ def render_footer():
     """Renders a clean, professional footer with contact info across all pages."""
     st.markdown(
         """
-        <hr style="margin-top: 50px; margin-bottom: 20px; border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-        <div style="text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 14px; padding-bottom: 30px;">
+        <hr style="margin-top: 50px; margin-bottom: 20px; border: 0; border-top: 1px solid rgba(128, 128, 128, 0.2);">
+        <div style="text-align: center; font-size: 14px; padding-bottom: 30px;">
             <p>🧬 <b>biochemtools.tech</b> | Enterprise Cheminformatics & In Silico Screening Suite</p>
             <p>📧 Contact & Support: <a href="mailto:info@biochemtools.tech" style="color: #4CAF50; text-decoration: none;">info@biochemtools.tech</a></p>
-            <p style="font-size: 12px; margin-top: 5px; color: rgba(255, 255, 255, 0.4);">© 2026 BiochemTools. All rights reserved.</p>
+            <p style="font-size: 12px; margin-top: 5px; opacity: 0.6;">© 2026 BiochemTools. All rights reserved.</p>
         </div>
         """,
         unsafe_allow_html=True,
