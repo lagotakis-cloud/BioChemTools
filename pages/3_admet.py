@@ -269,6 +269,106 @@ if st.session_state.admet_results is None:
             results = []
             progress_bar = st.progress(0)
 
-            params = FilterCatalogParams()
-            params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
-            catalog = FilterCatalog(params)
+            try:
+                params = FilterCatalogParams()
+                params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
+                catalog = FilterCatalog(params)
+            except Exception:
+                catalog = None
+
+            for i, item in enumerate(input_data_list):
+                if is_smiles_mode:
+                    smi = item
+                    display_name = item
+                else:
+                    display_name = item
+                    smi = get_smiles_from_pubchem(item)
+
+                if smi is None:
+                    progress_bar.progress((i + 1) / len(input_data_list))
+                    continue
+
+                mol = Chem.MolFromSmiles(smi)
+                if mol is None:
+                    progress_bar.progress((i + 1) / len(input_data_list))
+                    continue
+
+                esol = calculate_esol(mol)
+                sol_class = classify_solubility(esol)
+
+                pains_descriptions = []
+                if catalog is not None:
+                    try:
+                        pains_matches = catalog.GetMatches(mol)
+                        pains_descriptions = [
+                            m.GetDescription() for m in pains_matches
+                        ]
+                    except Exception:
+                        pass
+
+                alerts = check_structural_alerts(mol)
+                cyp_inhibitions = check_cyp450_inhibition(mol)
+
+                score = 100
+                if pains_descriptions:
+                    score -= 40
+                score -= len(alerts) * 25
+                if "Insoluble" in sol_class or "Poorly" in sol_class:
+                    score -= 15
+                score = max(0, score)
+
+                failure_reasons = []
+                if pains_descriptions:
+                    failure_reasons.append(
+                        f"PAINS: {', '.join(pains_descriptions)}"
+                    )
+                if alerts:
+                    failure_reasons.append(f"Alerts: {', '.join(alerts)}")
+
+                toxicity_status = (
+                    " | ".join(failure_reasons)
+                    if failure_reasons
+                    else "Safe (No Alerts)"
+                )
+
+                results.append({
+                    "Name / SMILES": display_name,
+                    "SMILES": smi,
+                    "ADMET Score (%)": score,
+                    "LogS (ESOL)": round(esol, 2),
+                    "Solubility": sol_class,
+                    "CYP450 Profile": ", ".join(cyp_inhibitions),
+                    "PAINS Match": (
+                        ", ".join(pains_descriptions)
+                        if pains_descriptions
+                        else "None detected"
+                    ),
+                    "Reactive Alerts": (
+                        ", ".join(alerts) if alerts else "None detected"
+                    ),
+                    "Overall Status": toxicity_status,
+                })
+
+                progress_bar.progress((i + 1) / len(input_data_list))
+
+            if results:
+                st.session_state.admet_results = results
+                st.rerun()
+            else:
+                st.error(
+                    "Could not process any valid compounds. Please check your"
+                    " input names or SMILES."
+                )
+
+
+# ==========================================
+# 2. RESULTS & DOWNLOAD
+# ==========================================
+else:
+    if st.button("🔄 New Search / Change Data"):
+        st.session_state.admet_results = None
+        st.rerun()
+
+    df_results = pd.DataFrame(st.session_state.admet_results)
+
+    # ---
