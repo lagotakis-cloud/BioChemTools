@@ -60,7 +60,7 @@ def render_footer():
         """
         <hr style="margin-top: 50px; margin-bottom: 20px; border: 0; border-top: 1px solid rgba(128, 128, 128, 0.2);">
         <div style="text-align: center; font-size: 14px; padding-bottom: 30px;">
-            <p>🧬 <b>biochemtools.tech</b> | Enterprise Cheminformatics & In Silico Screening Suite</p>
+            <p>🧬 <b>biochemtools.tech</b> | Free Drug Molecules Screening Suite</p>
             <p>📧 Contact & Support: <a href="mailto:info@biochemtools.tech" style="color: #4CAF50; text-decoration: none;">info@biochemtools.tech</a></p>
             <p style="font-size: 12px; margin-top: 5px; opacity: 0.6;">© 2026 BiochemTools. All rights reserved.</p>
         </div>
