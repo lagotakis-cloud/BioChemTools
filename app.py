@@ -1,5 +1,6 @@
 import streamlit as st
 from components import render_navbar
+from components import render_footer
 
 st.set_page_config(
     page_title="biochemtools.tech | Enterprise Cheminformatics",
@@ -64,7 +65,5 @@ with c2:
     )
 
 st.markdown("---")
-st.markdown(
-    "💡 *Tip: You can navigate to any tool at any time using the sidebar menu on"
-    " the left.*"
-)
+
+render_footer()
