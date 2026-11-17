@@ -1,90 +1,83 @@
 import streamlit as st
 
-# Ρύθμιση σελίδας με κλειστή πλαϊνή μπάρα για καθαρό dashboard look
 st.set_page_config(
-    page_title="biochemtools.tech | Cheminformatics Suite",
+    page_title="biochemtools.tech | Enterprise Cheminformatics",
     page_icon="🧬",
     layout="wide",
-    initial_sidebar_state="collapsed"
 )
 
-# Custom CSS για μοντέρνα εμφάνιση και banners
-st.markdown("""
-<style>
-    .main-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        color: #1E3A8A;
-        margin-bottom: 0px;
-    }
-    .subtitle {
-        font-size: 1.2rem;
-        color: #4B5563;
-        margin-bottom: 30px;
-    }
-</style>
-""", unsafe_allow_html=True)
+from components import render_navbar
 
-# ----------------- HEADER & HORIZONTAL NAVIGATION -----------------
-st.markdown('<p class="main-title">🧬 biochemtools.tech</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle"> Free, open tools suite for drug discovery, biochemistry & genetics.</p>', unsafe_allow_html=True)
+render_navbar()
 
-# ----------------- BANNERS / CARDS ΓΙΑ ΤΑ 8 ΕΡΓΑΛΕΙΑ -----------------
-st.subheader("Explore our platform's tools")
+# --- HERO SECTION ---
+st.title("🧬 biochemtools.tech")
+st.markdown(
+    "### Η σύγχρονη, γρήγορη και επαγγελματική σουίτα εργαλείων Cheminformatics"
+    " για In Silico Screening και Ανάλυση Μορίων."
+)
+st.markdown("---")
 
-# Σειρά 1 (Εργαλεία 1-4)
+# --- DASHBOARD STATS / KPIS ---
 col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    with st.container(border=True):
-        st.markdown("### Lipinski Rule of 5")
-        st.caption("A rule of thumb to evaluate druglikeness.")
-        st.page_link("pages/1_lipinski.py", label="Open tool", icon="👉")
-
-with col2:
-    with st.container(border=True):
-        st.markdown("### Veber Rules")
-        st.caption("Additional rules for oral bioavailability.")
-        st.page_link("pages/2_veber.py", label="Open tool", icon="👉")
-
-with col3:
-    with st.container(border=True):
-        st.markdown("### ADMET Profiler")
-        st.caption("Computational estimation of Absorption, Distribution, Metabolism, Excretion & Toxicity")
-        st.page_link("pages/3_admet.py", label="Open tool", icon="👉")
-
-with col4:
-    with st.container(border=True):
-        st.markdown("### Functional Groups")
-        st.caption("Automated counting of functional groups in molecules of pharmacological interest")
-        st.page_link("pages/4_functional_groups.py", label="Open tool", icon="👉")
-
-# Σειρά 2 (Εργαλεία 5-8)
-col5, col6, col7, col8 = st.columns(4)
-
-with col5:
-    with st.container(border=True):
-        st.markdown("### 🔬 Fragments (Ro3)")
-        st.caption("Rule of 3 checker για Fragment-Based Drug Design.")
-        st.page_link("pages/5_fragments.py", label="Άνοιγμα Εργαλείου", icon="👉")
-
-with col6:
-    with st.container(border=True):
-        st.markdown("### 🔄 Format Converter")
-        st.caption("Convert SMILES ⇄ InChI ⇄ SDF & Download new format file.")
-        st.page_link("pages/6_converter.py", label="Open tool", icon="👉")
-
-with col7:
-    with st.container(border=True):
-        st.markdown("### 🧬 Scaffold Splitter")
-        st.caption("Bemis-Murcko nucleus isolation.")
-        st.page_link("pages/7_scaffold.py", label="Open tool", icon="👉")
-
-with col8:
-    with st.container(border=True):
-        st.markdown("### 📈 Similarity Matrix")
-        st.caption("Similarity calculation in molecule matrices and heatmap presentation.")
-        st.page_link("pages/8_similarity_matrix.py", label="Open tool", icon="👉")
+col1.metric("Ενεργά Εργαλεία", "7", "Enterprise Ready")
+col2.metric("Υποστηριζόμενες Μορφές", "SMILES, InChI, SDF", "Bidirectional")
+col3.metric("Αλγόριθμοι RDKit", "Lipinski, Veber, ADMET", "High Precision")
+col4.metric("Hosting & Performance", "Streamlit Cloud", "Lightning Fast")
 
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #6B7280;'>biochemtools.tech © 2026 — Built with Streamlit & RDKit</p>", unsafe_allow_html=True)
+
+# --- GRID NAVIGATION ΜΕ ΤΑ 7 ΕΡΓΑΛΕΙΑ ---
+st.subheader("🛠️ Διαθέσιμα Εργαλεία Σουίτας")
+
+c1, c2, c3 = st.columns(3)
+
+with c1:
+  st.markdown("#### 1. Lipinski's Rule of 5")
+  st.markdown("Έλεγχος κανόνων φαρμακευτικότητας και φυσικοχημικών ιδιοτήτων.")
+  st.page_link("pages/1_lipinski.py", label="Άνοιγμα Lipinski", icon="💊")
+
+  st.markdown("#### 4. Ghose Filter")
+  st.markdown("Αξιολόγηση βάσει MW, LogP, βαρέων ατόμων και Molar Refractivity.")
+  st.page_link("pages/4_ghose.py", label="Άνοιγμα Ghose", icon="🧪")
+
+  st.markdown("#### 7. File Converter")
+  st.markdown(
+      "Universal μετατροπή μορφών αρχείων αναφορών (CSV ⇄ TXT ⇄ Excel)."
+  )
+  st.page_link("pages/7_file_converter.py", label="Άνοιγμα Converter", icon="📁")
+
+with c2:
+  st.markdown("#### 2. Veber's Rules")
+  st.markdown(
+      "Ανάλυση ευελιξίας δεσμών και πολικής επιφάνειας (TPSA) για"
+      " βιοδιαθεσιμότητα."
+  )
+  st.page_link("pages/2_veber.py", label="Άνοιγμα Veber", icon="📐")
+
+  st.markdown("#### 5. QED Evaluator")
+  st.markdown(
+      "Υπολογισμός ποσοτικού δείκτη ελκυστικότητας (0 έως 1) για φάρμακα."
+  )
+  st.page_link("pages/5_qed.py", label="Άνοιγμα QED", icon="📈")
+
+with c3:
+  st.markdown("#### 3. Enterprise ADMET")
+  st.markdown(
+      "Προηγμένος έλεγχος ADMET, ESOL, PAINS, CYP450 και τοξικότητας."
+  )
+  st.page_link("pages/3_admet.py", label="Άνοιγμα ADMET", icon="🛡️")
+
+  st.markdown("#### 6. Name ⇄ SMILES")
+  st.markdown(
+      "Αμφίδρομη μαζική μετατροπή ονομάτων (PubChem) σε SMILES και αντίστροφα."
+  )
+  st.page_link(
+      "pages/6_names_to_smiles.py", label="Άνοιγμα Name ⇄ SMILES", icon="🔤"
+  )
+
+st.markdown("---")
+st.markdown(
+    "💡 *Tip: Μπορείτε ανά πάσα στιγμή να πλοηγηθείτε σε οποιοδήποτε εργαλείο"
+    " χρησιμοποιώντας το μενού (sidebar) στα αριστερά.*"
+)
