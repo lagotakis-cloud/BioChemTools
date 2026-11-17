@@ -26,30 +26,26 @@ def render_navbar():
     """, unsafe_allow_html=True)
     
     # --- 1η Σειρά Εργαλείων ---
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.page_link("app.py", label="Αρχική", icon="🏠")
+        st.page_link("app.py", label="Home Page")
     with col2:
         st.page_link("pages/1_lipinski.py", label="Lipinski Rules")
     with col3:
         st.page_link("pages/2_veber.py", label="Veber Rules")
     with col4:
         st.page_link("pages/3_admet.py", label="ADMET Profile")
-    with col5:
-        st.page_link("pages/4_functional_groups.py", label="Functional Groups")
 
     # --- 2η Σειρά Εργαλείων ---
-    col6, col7, col8, col9, col10 = st.columns(5)
+    col5, col6, col7, col8 = st.columns(4)
+    with col5:
+        st.page_link("pages/4_ghose.py", label="Ghose Filter")
     with col6:
-        st.page_link("pages/5_fragments.py", label="Fragments")
+        st.page_link("pages/5_qed.py", label="QED Score")
     with col7:
-        st.page_link("pages/6_converter.py", label="File Converter")
+        st.page_link("pages/6_names_to_smiles.py", label="Names to SMILES")
     with col8:
-        st.page_link("pages/7_scaffold.py", label="Scaffold")
-    with col9:
-        st.page_link("pages/8_similarity_matrix.py", label="Tanimoto Similarity")
-    with col10:
-        st.empty()
+        st.page_link("pages/7_file_converter.py", label="File Converter")
         
     # Μικρό διακριτικό κενό μετά το navbar για να ξεκινήσει το περιεχόμενο της σελίδας
     st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
