@@ -3,17 +3,16 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Universal Report Exporter", page_icon="📊", layout="wide"
+    page_title="Universal Report Exporter", page_icon="📁", layout="wide"
 )
 
 from components import render_navbar
 
 render_navbar()
 
-st.title("📊 Universal Report & Format Exporter")
+st.title("📁 Universal Report & Format Exporter")
 st.markdown(
-    "Μετατροπή μορφής αρχείων αναφορών και αποτελεσμάτων (CSV ⇄ TXT ⇄ Excel)"
-    " με δυνατότητα προεπισκόπησης και άμεσου εξαγωγής."
+    "Μετατροπή μορφής αρχείων αναφορών και αποτελεσμάτων (CSV ⇄ TXT ⇄ Excel)."
 )
 st.markdown("---")
 
@@ -24,7 +23,6 @@ uploaded_report = st.file_uploader(
 
 if uploaded_report is not None:
   try:
-    # Ανίχνευση τύπου και ανάγνωση
     file_name = uploaded_report.name
     if file_name.endswith(".csv"):
       df = pd.read_csv(uploaded_report)
@@ -37,18 +35,15 @@ if uploaded_report is not None:
         f"Επιτυχής φόρτωση αρχείου `{file_name}` ({len(df)} γραμμές,"
         f" {len(df.columns)} στήλες)."
     )
-
     st.markdown("### 👁️ Προεπισκόπηση Δεδομένων")
     st.dataframe(df, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("📥 Επιλογή Νέας Μορφής Εξαγωγής (Convert & Export)")
-
+    st.subheader("📥 Επιλογή Νέας Μορφής Εξαγωγής")
     target_format = st.selectbox(
         "Επιθυμητή μορφή αρχείου:",
         ("CSV (.csv)", "Tab-Separated Text (.txt)", "Excel Workbook (.xlsx)"),
     )
-
     new_file_name = st.text_input(
         "Όνομα νέου αρχείου (χωρίς επέκταση):", "converted_biochem_report"
     )
@@ -78,11 +73,10 @@ if uploaded_report is not None:
         mime=export_mime,
         type="primary",
     )
-
   except Exception as e:
     st.error(f"Σφάλμα κατά την επεξεργασία του αρχείου: {e}")
 else:
   st.info(
-      "👆 Ανεβάστε κάποιο από τα αρχεία CSV/Excel που κατεβάσατε από τα"
-      " προηγούμενα εργαλεία της σουίτας για να το μετατρέψετε."
+      "👆 Ανεβάστε κάποιο από τα αρχεία που κατεβάσατε από τα προηγούμενα"
+      " εργαλεία της σουίτας για να το μετατρέψετε."
   )
