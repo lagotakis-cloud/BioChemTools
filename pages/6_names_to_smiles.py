@@ -4,6 +4,7 @@ import pubchempy as pcp
 from rdkit import Chem
 import streamlit as st
 from components import render_navbar
+from components import render_footer
 
 st.set_page_config(
     page_title="Name ⇄ SMILES Converter | BiochemTools",
@@ -222,3 +223,5 @@ Name resolution relies on external database indexing (PubChem). Ambiguous trade 
 
 Kim, S., Thiessen, P. A., Bolton, E. E., Chen, J., Fu, G., Gindulyte, A., ... & Wang, Y. (2016). PubChem Substance and Compound databases. *Nucleic Acids Research, 44*(D1), D1202–D1213.
 """)
+
+render_footer()
