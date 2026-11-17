@@ -191,7 +191,34 @@ else:
     )
 
 st.markdown("""
-### About Name ⇄ SMILES Conversion
+### What is Name ⇄ SMILES Conversion?
 
-This utility provides seamless batch translation between chemical compound names and SMILES (Simplified Molecular Input Line Entry System) strings, powered by PubChemPy and RDKit integration.
+In cheminformatics and drug discovery, chemical structures are represented in standardized machine-readable formats—most notably **SMILES (Simplified Molecular Input Line Entry System)**—whereas literature and databases frequently reference compounds by common names, trade names, or IUPAC nomenclature.
+
+Bidirectional translation between chemical names and SMILES strings is essential for data cleaning, library merging, and automated screening workflows.
+
+### How Does This Tool Work?
+
+The **Name ⇄ SMILES Converter** is a high-throughput batch translation utility powered by PubChemPy and RDKit integration, supporting four flexible conversion modes:
+
+1. **Type Names to SMILES:** Resolves typed chemical names into canonical SMILES strings via PubChem.
+2. **Type SMILES to Names:** Resolves input SMILES strings into standardized compound names or synonyms.
+3. **Upload Names.txt to SMILES:** Batch processes text files containing compound names.
+4. **Upload SMILES.txt to Names:** Batch processes text files containing SMILES strings.
+
+### What Does the Tool Calculate and Resolve?
+
+For each entry in the input set, the tool:
+
+- Queries the PubChem database for robust name resolution and synonym matching.
+- Validates chemical structural integrity locally using RDKit parsers.
+- Outputs clean, tabular results containing paired compound names and SMILES strings without visual clutter, ready for immediate export in `.csv`, `.txt`, or `.xlsx` formats.
+
+### Limitations
+
+Name resolution relies on external database indexing (PubChem). Ambiguous trade names, proprietary identifiers, or highly novel synthesized compounds without PubChem entries may require direct SMILES input.
+
+### Scientific Reference
+
+Kim, S., Thiessen, P. A., Bolton, E. E., Chen, J., Fu, G., Gindulyte, A., ... & Wang, Y. (2016). PubChem Substance and Compound databases. *Nucleic Acids Research, 44*(D1), D1202–D1213.
 """)
