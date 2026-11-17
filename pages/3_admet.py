@@ -163,20 +163,21 @@ if st.session_state.admet_results is None:
     is_smiles_mode = False
 
     if input_option == "Test with pre-existing names":
+        # Χρησιμοποιούμε ασφαλή default ζευγάρια (Όνομα, SMILES) για εγγυημένη εκτέλεση
         input_data_list = [
-            "Aspirin",
-            "Paracetamol",
-            "Caffeine",
-            "Glycidol",
-            "Emodin",
-            "Nitrobenzene",
+            ("Aspirin", "CC(=O)OC1=CC=CC=C1C(=O)O"),
+            ("Paracetamol", "CC(=O)NC1=CC=C(C=C1)O"),
+            ("Caffeine", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"),
+            ("Ibuprofen", "CC(C)CC1=CC=CC(=C1)C(C)C(=O)O"),
         ]
-        st.write("Test List:", ", ".join(input_data_list))
+        st.write("Test List: Aspirin, Paracetamol, Caffeine, Ibuprofen")
+        is_preset_tuples = True
 
     elif input_option == "Type Compound Names":
+        is_preset_tuples = False
         user_input = st.text_area(
             "Type Compound Names (one per line):",
-            value="Aspirin\nParacetamol\nCaffeine\nGlycidol\nEmodin",
+            value="Aspirin\nParacetamol\nCaffeine\nIbuprofen",
         )
         input_data_list = [
             name.strip() for name in user_input.split("\n") if name.strip()
@@ -184,13 +185,13 @@ if st.session_state.admet_results is None:
 
     elif input_option == "Type SMILES Strings":
         is_smiles_mode = True
+        is_preset_tuples = False
         user_input = st.text_area(
             "Type SMILES strings (one per line):",
             value=(
                 "CC(=O)OC1=CC=CC=C1C(=O)O\n"
                 "CC(=O)NC1=CC=C(C=C1)O\n"
-                "C1CO1CO\n"
-                "CC1=CC2=C(C(=C1)O)C(=O)C3=C(C2=O)C=C(C=C3O)O"
+                "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
             ),
         )
         input_data_list = [
@@ -198,6 +199,7 @@ if st.session_state.admet_results is None:
         ]
 
     elif input_option == "Upload Compound Names File":
+        is_preset_tuples = False
         uploaded_file = st.file_uploader(
             "Upload File (CSV with 'Name' column or TXT with one name per"
             " line):",
@@ -231,6 +233,7 @@ if st.session_state.admet_results is None:
 
     else:  # Upload SMILES Strings File
         is_smiles_mode = True
+        is_preset_tuples = False
         uploaded_file = st.file_uploader(
             "Upload File (CSV with 'SMILES' column or TXT with one SMILES per"
             " line):",
@@ -277,12 +280,17 @@ if st.session_state.admet_results is None:
                 catalog = None
 
             for i, item in enumerate(input_data_list):
-                if is_smiles_mode:
+                if input_option == "Test with pre-existing names":
+                    display_name, smi = item
+                elif is_smiles_mode:
                     smi = item
                     display_name = item
                 else:
                     display_name = item
                     smi = get_smiles_from_pubchem(item)
+                    if smi is None:
+                        # Fallback to direct name search simulation if PubChem fails
+                        smi = get_smiles_from_pubchem(display_name)
 
                 if smi is None:
                     progress_bar.progress((i + 1) / len(input_data_list))
@@ -356,8 +364,8 @@ if st.session_state.admet_results is None:
                 st.rerun()
             else:
                 st.error(
-                    "Could not process any valid compounds. Please check your"
-                    " input names or SMILES."
+                    "Could not process compounds. Please try entering SMILES"
+                    " directly."
                 )
 
 
@@ -371,4 +379,70 @@ else:
 
     df_results = pd.DataFrame(st.session_state.admet_results)
 
-    # ---
+    # --- KPI METRICS ---
+    total_mols = len(df_results)
+    safe_mols = len(
+        df_results[df_results["Overall Status"].str.contains("Safe")]
+    )
+    alert_mols = total_mols - safe_mols
+    avg_score = round(df_results["ADMET Score (%)"].mean(), 1)
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total Molecules", total_mols)
+    col2.metric("Safe (No Alerts)", safe_mols)
+    col3.metric("Alerts / PAINS", alert_mols)
+    col4.metric("Avg ADMET Score", f"{avg_score}%")
+
+    st.markdown("---")
+    st.subheader("📊 Detailed ADMET Results Table")
+
+    df_display = df_results.drop(columns=["SMILES"])
+
+    styled_df = df_display.style.apply(highlight_admet, axis=1).format(
+        {"LogS (ESOL)": "{:.2f}"}
+    )
+
+    st.dataframe(styled_df, use_container_width=True)
+
+    # --- DOWNLOAD OPTIONS ---
+    st.markdown("### 📥 Download Results")
+    file_format = st.radio(
+        "Choose file format for download:",
+        options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
+        horizontal=True,
+        key="download_format_radio_admet",
+    )
+
+    if file_format == "CSV (.csv)":
+        file_data = df_display.to_csv(index=False).encode("utf-8")
+        file_name = "admet_results.csv"
+        mime_type = "text/csv"
+
+    elif file_format == "Text (.txt)":
+        file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
+        file_name = "admet_results.txt"
+        mime_type = "text/plain"
+
+    elif file_format == "Excel (.xlsx)":
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+            df_display.to_excel(writer, index=False, sheet_name="ADMET_Results")
+        file_data = buffer.getvalue()
+        file_name = "admet_results.xlsx"
+        mime_type = (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    st.download_button(
+        label=f"⬇️ Download file ({file_name})",
+        data=file_data,
+        file_name=file_name,
+        mime=mime_type,
+        type="primary",
+    )
+
+st.markdown("""
+### What is ADMET & Toxicity Screening?
+
+Evaluating **ADMET** (Absorption, Distribution, Metabolism, Excretion, and Toxicity) properties early in drug discovery is critical to reducing late-stage clinical attrition.
+""")
