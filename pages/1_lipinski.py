@@ -8,10 +8,10 @@ from components import render_navbar
 
 render_navbar()
 
-# --- ΕΠΙΚΕΦΑΛΙΔΑ & ΠΕΡΙΓΡΑΦΗ ---
+# --- TITLE & DESCRIPRTION ---
 st.set_page_config(
     page_title="Lipinski Rule of 5 | BiochemTools",
-    page_icon="assets/organic.png",  # Η εικόνα σου
+    page_icon="assets/organic.png",
     layout="wide",
 )
 st.title("Lipinski Rule of 5 Checker")
@@ -23,7 +23,7 @@ if "lipinski_results" not in st.session_state:
   st.session_state.lipinski_results = None
 
 
-# --- ΣΥΝΑΡΤΗΣΕΙΣ ---
+# --- FUNCTIONS ---
 def get_smiles_from_pubchem(compound_name):
   try:
     compounds = pcp.get_compounds(compound_name.strip(), "name")
@@ -37,9 +37,9 @@ def get_smiles_from_pubchem(compound_name):
 
 def highlight_lipinski(row):
   styles = [""] * len(row)
-  name_idx = row.index.get_loc("Όνομα / SMILES")
+  name_idx = row.index.get_loc("Name / SMILES")
 
-  if "Passed" in str(row["Κατάσταση"]):
+  if "Passed" in str(row["Status"]):
     styles[name_idx] = (
         "background-color: #d4edda; color: #155724; font-weight: bold;"
     )
@@ -48,18 +48,18 @@ def highlight_lipinski(row):
         "background-color: #f8d7da; color: #721c24; font-weight: bold;"
     )
 
-  if row["Μοριακό Βάρος (MW)"] > 500:
-    styles[row.index.get_loc("Μοριακό Βάρος (MW)")] = (
+  if row["Molecular Weight (MW)"] > 500:
+    styles[row.index.get_loc("Molecular Weight (MW)")] = (
         "background-color: #f8d7da; color: #721c24;"
     )
   if row["LogP"] > 5:
     styles[row.index.get_loc("LogP")] = "background-color: #f8d7da; color: #721c24;"
-  if row["Δότες H (HBD)"] > 5:
-    styles[row.index.get_loc("Δότες H (HBD)")] = (
+  if row["H Bond Donors (HBD)"] > 5:
+    styles[row.index.get_loc("H Bond Donors (HBD)")] = (
         "background-color: #f8d7da; color: #721c24;"
     )
-  if row["Δέκτες H (HBA)"] > 10:
-    styles[row.index.get_loc("Δέκτες H (HBA)")] = (
+  if row["H Bond Acceptors (HBA)"] > 10:
+    styles[row.index.get_loc("H Bond Acceptors (HBA)")] = (
         "background-color: #f8d7da; color: #721c24;"
     )
 
@@ -67,24 +67,24 @@ def highlight_lipinski(row):
 
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ
+# 1. DATA INPUT
 # ==========================================
 if st.session_state.lipinski_results is None:
   input_option = st.radio(
-      "Επιλέξτε τρόπο εισαγωγής μορίων:",
+      "Choose data input:",
       (
-          "Δοκιμή με έτοιμα ονόματα",
-          "Πληκτρολόγηση ονομάτων",
-          "Πληκτρολόγηση SMILES",
-          "Ανέβασμα αρχείου ονομάτων",
-          "Ανέβασμα αρχείου SMILES",
+          "Test with pre-existing names",
+          "Type PubChem Names",
+          "Type SMILES Strings",
+          "Upload PubChem Names File",
+          "Upload SMILES Strings File",
       ),
   )
 
   input_data_list = []
   is_smiles_mode = False
 
-  if input_option == "Δοκιμή με έτοιμα ονόματα":
+  if input_option == "Test with pre-existing names":
     input_data_list = [
         "Aspirin",
         "Cyclosporin A",
@@ -92,21 +92,21 @@ if st.session_state.lipinski_results is None:
         "Vancomycin",
         "Omeprazole",
     ]
-    st.write("Δοκιμαστική λίστα:", ", ".join(input_data_list))
+    st.write("Test List:", ", ".join(input_data_list))
 
-  elif input_option == "Πληκτρολόγηση ονομάτων":
+  elif input_option == "Type Names":
     user_input = st.text_area(
-        "Γράψτε τα ονόματα (ένα ανά γραμμή):",
+        "Type Compound Names (one in each line):",
         value="Aspirin\nSertraline\nVancomycin",
     )
     input_data_list = [
         name.strip() for name in user_input.split("\n") if name.strip()
     ]
 
-  elif input_option == "Πληκτρολόγηση SMILES":
+  elif input_option == "Type SMILES":
     is_smiles_mode = True
     user_input = st.text_area(
-        "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
+        "Type SMILES strings (one in each line):",
         value=(
             "CC(=O)OC1=CC=CC=C1C(=O)O\nCC(C)CC1=CC=CC(=C1)C(C)C(=O)O\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C"
         ),
@@ -115,9 +115,9 @@ if st.session_state.lipinski_results is None:
         smi.strip() for smi in user_input.split("\n") if smi.strip()
     ]
 
-  elif input_option == "Ανέβασμα αρχείου ονομάτων":
+  elif input_option == "Upload Names File":
     uploaded_file = st.file_uploader(
-        "Ανεβάστε αρχείο (CSV με στήλη 'Name' ή TXT με ένα όνομα ανά γραμμή):",
+        "Upload File (CSV with 'Name' column ή TXT with one name in each line):",
         type=["csv", "txt"],
     )
     if uploaded_file is not None:
@@ -137,15 +137,15 @@ if st.session_state.lipinski_results is None:
           ]
 
         st.success(
-            f"Επιτυχής φόρτωση {len(input_data_list)} εγγραφών από το αρχείο!"
+            f"Successful {len(input_data_list)} compound names uploaded!"
         )
       except Exception as e:
-        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+        st.error(f"Error in uploading: {e}")
 
   else:  # Ανέβασμα αρχείου SMILES
     is_smiles_mode = True
     uploaded_file = st.file_uploader(
-        "Ανεβάστε αρχείο (CSV με στήλη 'SMILES' ή TXT με ένα SMILES ανά γραμμή):",
+        "Upload File (CSV with 'SMILES' column ή TXT with one SMILES string in each line):",
         type=["csv", "txt"],
     )
     if uploaded_file is not None:
@@ -167,14 +167,14 @@ if st.session_state.lipinski_results is None:
           ]
 
         st.success(
-            f"Επιτυχής φόρτωση {len(input_data_list)} SMILES από το αρχείο!"
+            f"Successful {len(input_data_list)} SMILES strings uploaded!"
         )
       except Exception as e:
-        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+        st.error(f"Error in uploading: {e}")
 
-  if st.button("Αναζήτηση & Υπολογισμός", type="primary"):
+  if st.button("Search & Calculate", type="primary"):
     if not input_data_list:
-      st.warning("Παρακαλώ εισάγετε ή ανεβάστε δεδομένα.")
+      st.warning("Please type or upload data.")
     else:
       results = []
       progress_bar = st.progress(0)
@@ -189,15 +189,15 @@ if st.session_state.lipinski_results is None:
 
         if smi is None:
           st.warning(
-              f"Δεν βρέθηκε η ένωση / SMILES: **{display_name}** στο PubChem."
-              " Παράλειψη."
+              f"Compound Name / SMILES: **{display_name}** not found in PubChem."
+              "Compound excluded."
           )
           continue
 
         mol = Chem.MolFromSmiles(smi)
         if mol is None:
           st.warning(
-              f"Μη έγκυρο SMILES για την ένωση: **{display_name}**. Παράλειψη."
+              f"Invalid SMILES string: **{display_name}**. Compound excluded."
           )
           continue
 
@@ -219,15 +219,15 @@ if st.session_state.lipinski_results is None:
         status = "Passed (Drug-like)" if violations <= 1 else "Failed"
 
         results.append({
-            "Όνομα / SMILES": display_name,
+            "Name/ SMILES": display_name,
             "SMILES": smi,
-            "Μοριακό Βάρος (MW)": round(mw, 2),
+            "Molecular Weight(MW)": round(mw, 2),
             "LogP": round(logp, 2),
-            "Δότες H (HBD)": hbd,
+            "H Bond Donors (HBD)": hbd,
             "HBA_val": hba,
-            "Δέκτες H (HBA)": hba,
-            "Παραβάσεις": violations,
-            "Κατάσταση": status,
+            "H Bond Acceptors (HBA)": hba,
+            "Violations": violations,
+            "Status": status,
         })
 
         progress_bar.progress((i + 1) / len(input_data_list))
@@ -237,21 +237,19 @@ if st.session_state.lipinski_results is None:
         st.rerun()
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
+# 2. RESULTS & DOWNLOAD
 # ==========================================
 else:
-  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
+  if st.button("🔄 New Search / Change Data"):
     st.session_state.lipinski_results = None
     st.rerun()
 
   df_results = pd.DataFrame(st.session_state.lipinski_results)
 
-  st.subheader("📊 Αποτελέσματα Ανάλυσης")
+  st.subheader("📊 Analysis Results")
 
-  # Αφαίρεση βοηθητικής στήλης
   df_display = df_results.drop(columns=["SMILES", "HBA_val"])
 
-  # Εφαρμογή styling και μορφοποίηση σε 2 δεκαδικά ψηφία
   styled_df = (
       df_display.style.apply(highlight_lipinski, axis=1)
       .format({"Μοριακό Βάρος (MW)": "{:.2f}", "LogP": "{:.2f}"})
@@ -259,10 +257,10 @@ else:
 
   st.dataframe(styled_df, use_container_width=True)
 
-  # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
-  st.markdown("### 📥 Λήψη Αποτελεσμάτων")
+  # --- DOWNLOAD OPTIONS ---
+  st.markdown("### 📥 Download Results")
   file_format = st.radio(
-      "Επιλέξτε μορφή αρχείου για λήψη:",
+      "Choose file type for download:",
       options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
       horizontal=True,
       key="download_format_radio",
@@ -289,7 +287,7 @@ else:
     )
 
   st.download_button(
-      label=f"⬇️ Λήψη αρχείου ({file_name})",
+      label=f"⬇️ Download file ({file_name})",
       data=file_data,
       file_name=file_name,
       mime=mime_type,
