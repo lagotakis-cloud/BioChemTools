@@ -15,8 +15,8 @@ render_navbar()
 
 st.title("🧪 Ghose Filter Drug-Likeness Screener")
 st.markdown(
-    "Έλεγχος συμμόρφωσης ενός μορίου με το κλασικό φίλτρο Ghose (βασισμένο σε"
-    " MW, LogP, αριθμό βαρέων ατόμων και Molar Refractivity)."
+    "Έλεγχος συμμόρφωσης ενός μορίου με το κλασικό φίλτρο Ghose (MW, LogP,"
+    " βαριά άτομα, Molar Refractivity)."
 )
 st.markdown("---")
 
@@ -92,20 +92,19 @@ else:
   mol = res["mol"]
 
   col1, col2, col3 = st.columns(3)
-  col1.metric(
-      "Ghose Status", "Passed ✅" if passed else "Failed ❌", delta=None
-  )
+  col1.metric("Ghose Status", "Passed ✅" if passed else "Failed ❌")
   col2.metric("Μοριακό Βάρος", res["mw"])
   col3.metric("Βαριά Άτομα", res["num_atoms"])
 
   st.markdown("---")
   c1, c2 = st.columns([1, 2])
   with c1:
+    from rdkit.Chem import Draw
+
     img = Draw.MolToImage(mol, size=(300, 300))
     st.image(img, use_container_width=True)
   with c2:
     st.subheader("📊 Αναλυτικός Πίνακας Κριτηρίων Ghose")
-
     df_details = pd.DataFrame({
         "Παράμετρος": [
             "Μοριακό Βάρος (MW)",
