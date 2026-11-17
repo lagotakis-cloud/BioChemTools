@@ -2,205 +2,266 @@ import io
 import pandas as pd
 import pubchempy as pcp
 from rdkit import Chem
-from rdkit.Chem import Crippen
-from rdkit.Chem import Descriptors
+from rdkit.Chem import Crippen, Descriptors
 import streamlit as st
 
 st.set_page_config(
-    page_title="Ghose Filter Screener", page_icon="🧪", layout="wide"
+    page_title="Ghose Filter Checker | BiochemTools",
+    page_icon="assets/organic.png",
+    layout="wide",
 )
 
 from components import render_navbar
 
 render_navbar()
 
-st.title("🧪 Ghose Filter Drug-Likeness Screener")
-st.markdown(
-    "Έλεγχος συμμόρφωσης μορίων με το κλασικό φίλτρο Ghose (MW, LogP, βαριά"
-    " άτομα, Molar Refractivity)."
-)
+st.title("Ghose Filter Checker")
 st.markdown("---")
 
 # --- INITIALIZE SESSION STATE ---
 if "ghose_results" not in st.session_state:
   st.session_state.ghose_results = None
 
+
+# --- ΣΥΝΑΡΤΗΣΕΙΣ ---
+def get_smiles_from_pubchem(compound_name):
+  try:
+    compounds = pcp.get_compounds(compound_name.strip(), "name")
+    if compounds:
+      return compounds[0].canonical_smiles
+    return None
+  except Exception:
+    return None
+
+
+def highlight_ghose(row):
+  styles = [""] * len(row)
+  name_idx = row.index.get_loc("Όνομα / SMILES")
+
+  if "Passed" in str(row["Κατάσταση"]):
+    styles[name_idx] = (
+        "background-color: #d4edda; color: #155724; font-weight: bold;"
+    )
+  else:
+    styles[name_idx] = (
+        "background-color: #f8d7da; color: #721c24; font-weight: bold;"
+    )
+
+  if not (160 <= row["Μοριακό Βάρος (MW)"] <= 480):
+    styles[row.index.get_loc("Μοριακό Βάρος (MW)")] = (
+        "background-color: #f8d7da; color: #721c24;"
+    )
+  if not (-0.4 <= row["LogP"] <= 5.6):
+    styles[row.index.get_loc("LogP")] = (
+        "background-color: #f8d7da; color: #721c24;"
+    )
+  if not (20 <= row["Βαριά Άτομα"] <= 70):
+    styles[row.index.get_loc("Βαριά Άτομα")] = (
+        "background-color: #f8d7da; color: #721c24;"
+    )
+  if not (40 <= row["Molar Refractivity"] <= 130):
+    styles[row.index.get_loc("Molar Refractivity")] = (
+        "background-color: #f8d7da; color: #721c24;"
+    )
+
+  return styles
+
+
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ (ΜΕ ΦΟΡΜΑ)
+# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ
 # ==========================================
 if st.session_state.ghose_results is None:
-  with st.form("ghose_input_form"):
-    input_option = st.radio(
-        "Επιλέξτε τρόπο εισαγωγής δεδομένων:",
-        (
-            "Δοκιμή με έτοιμη λίστα",
-            "Πληκτρολόγηση Ονομάτων (ένα ανά γραμμή)",
-            "Πληκτρολόγηση SMILES (ένα ανά γραμμή)",
-            "Ανέβασμα αρχείου Ονομάτων (.csv / .txt)",
-            "Ανέβασμα αρχείου SMILES (.csv / .txt)",
+  input_option = st.radio(
+      "Επιλέξτε τρόπο εισαγωγής μορίων:",
+      (
+          "Δοκιμή με έτοιμα ονόματα",
+          "Πληκτρολόγηση ονομάτων",
+          "Πληκτρολόγηση SMILES",
+          "Ανέβασμα αρχείου ονομάτων",
+          "Ανέβασμα αρχείου SMILES",
+      ),
+  )
+
+  input_data_list = []
+  is_smiles_mode = False
+
+  if input_option == "Δοκιμή με έτοιμα ονόματα":
+    input_data_list = [
+        "Aspirin",
+        "Cyclosporin A",
+        "Ibuprofen",
+        "Atorvastatin",
+        "Omeprazole",
+    ]
+    st.write("Δοκιμαστική λίστα:", ", ".join(input_data_list))
+
+  elif input_option == "Πληκτρολόγηση ονομάτων":
+    user_input = st.text_area(
+        "Γράψτε τα ονόματα (ένα ανά γραμμή):",
+        value="Aspirin\nSertraline\nAtorvastatin",
+    )
+    input_data_list = [
+        name.strip() for name in user_input.split("\n") if name.strip()
+    ]
+
+  elif input_option == "Πληκτρολόγηση SMILES":
+    is_smiles_mode = True
+    user_input = st.text_area(
+        "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
+        value=(
+            "CC(=O)OC1=CC=CC=C1C(=O)O\nCC(C)CC1=CC=CC(=C1)C(C)C(=O)O\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C"
         ),
     )
+    input_data_list = [
+        smi.strip() for smi in user_input.split("\n") if smi.strip()
+    ]
 
-    default_names = "Aspirin\nParacetamol\nIbuprofen\nCaffeine\nEnalapril"
-    default_smiles = (
-        "CC(=O)Oc1ccccc1C(=O)O\nCC(=O)Nc1ccc(O)cc1\nCC(C)Cc1ccc(cc1)C(C)C(=O)O"
+  elif input_option == "Ανέβασμα αρχείου ονομάτων":
+    uploaded_file = st.file_uploader(
+        "Ανεβάστε αρχείο (CSV με στήλη 'Name' ή TXT με ένα όνομα ανά γραμμή):",
+        type=["csv", "txt"],
     )
+    if uploaded_file is not None:
+      try:
+        if uploaded_file.name.endswith(".csv"):
+          df_upload = pd.read_csv(uploaded_file)
+          col_name = (
+              "Name" if "Name" in df_upload.columns else df_upload.columns[0]
+          )
+          input_data_list = (
+              df_upload[col_name].dropna().astype(str).tolist()
+          )
+        else:
+          stringdata = uploaded_file.getvalue().decode("utf-8")
+          input_data_list = [
+              line.strip() for line in stringdata.splitlines() if line.strip()
+          ]
 
-    text_input_data = ""
-    uploaded_file = None
-
-    if input_option == "Δοκιμή με έτοιμη λίστα":
-      st.markdown(
-          "**Προεπιλεγμένα μόρια:** Aspirin, Paracetamol, Ibuprofen, Caffeine,"
-          " Enalapril"
-      )
-    elif input_option == "Πληκτρολόγηση Ονομάτων (ένα ανά γραμμή)":
-      text_input_data = st.text_area(
-          "Εισάγετε ονόματα (ένα ανά γραμμή):", value=default_names, height=120
-      )
-    elif input_option == "Πληκτρολόγηση SMILES (ένα ανά γραμμή)":
-      text_input_data = st.text_area(
-          "Εισάγετε SMILES strings (ένα ανά γραμμή):",
-          value=default_smiles,
-          height=120,
-      )
-    elif input_option == "Ανέβασμα αρχείου Ονομάτων (.csv / .txt)":
-      uploaded_file = st.file_uploader(
-          "Ανεβάστε αρχείο με στήλη ονομάτων:", type=["csv", "txt"]
-      )
-    else:
-      uploaded_file = st.file_uploader(
-          "Ανεβάστε αρχείο με στήλη SMILES:", type=["csv", "txt"]
-      )
-
-    submitted = st.form_submit_button(
-        "Εκτέλεση Έλεγχου Ghose Filter", type="primary"
-    )
-
-  if submitted:
-    raw_items = []
-
-    if input_option == "Δοκιμή με έτοιμη λίστα":
-      raw_items = ["Aspirin", "Paracetamol", "Ibuprofen", "Caffeine", "Enalapril"]
-      mode = "name"
-    elif "Πληκτρολόγηση Ονομάτων" in input_option:
-      raw_items = [
-          line.strip() for line in text_input_data.split("\n") if line.strip()
-      ]
-      mode = "name"
-    elif "Πληκτρολόγηση SMILES" in input_option:
-      raw_items = [
-          line.strip() for line in text_input_data.split("\n") if line.strip()
-      ]
-      mode = "smiles"
-    elif "Ανέβασμα αρχείου Ονομάτων" in input_option:
-      mode = "name"
-      if uploaded_file is not None:
-        try:
-          if uploaded_file.name.endswith(".csv"):
-            df_up = pd.read_csv(uploaded_file)
-            raw_items = df_up.iloc[:, 0].dropna().astype(str).tolist()
-          else:
-            stringdata = uploaded_file.getvalue().decode("utf-8")
-            raw_items = [
-                l.strip() for l in stringdata.splitlines() if l.strip()
-            ]
-        except Exception as e:
-          st.error(f"Σφάλμα ανάγνωσης αρχείου: {e}")
-    else:
-      mode = "smiles"
-      if uploaded_file is not None:
-        try:
-          if uploaded_file.name.endswith(".csv"):
-            df_up = pd.read_csv(uploaded_file)
-            raw_items = df_up.iloc[:, 0].dropna().astype(str).tolist()
-          else:
-            stringdata = uploaded_file.getvalue().decode("utf-8")
-            raw_items = [
-                l.strip() for l in stringdata.splitlines() if l.strip()
-            ]
-        except Exception as e:
-          st.error(f"Σφάλμα ανάγνωσης αρχείου: {e}")
-
-    results = []
-
-    for item in raw_items:
-      mol = None
-      mol_name = item
-      smi = ""
-
-      if mode == "name":
-        try:
-          comps = pcp.get_compounds(item, "name")
-          if comps:
-            smi = comps[0].canonical_smiles
-            mol = Chem.MolFromSmiles(smi)
-        except:
-          pass
-      else:
-        smi = item
-        mol = Chem.MolFromSmiles(smi)
-        mol_name = "Custom_SMILES"
-
-      if mol is not None:
-        mw = round(Descriptors.MolWt(mol), 2)
-        logp = round(Crippen.MolLogP(mol), 2)
-        num_atoms = mol.GetNumHeavyAtoms()
-        mr = round(Crippen.MolMR(mol), 2)
-
-        passed = (
-            (160 <= mw <= 480)
-            and (-0.4 <= logp <= 5.6)
-            and (20 <= num_atoms <= 70)
-            and (40 <= mr <= 130)
+        st.success(
+            f"Επιτυχής φόρτωση {len(input_data_list)} εγγραφών από το αρχείο!"
         )
+      except Exception as e:
+        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+
+  else:  # Ανέβασμα αρχείου SMILES
+    is_smiles_mode = True
+    uploaded_file = st.file_uploader(
+        "Ανεβάστε αρχείο (CSV με στήλη 'SMILES' ή TXT με ένα SMILES ανά γραμμή):",
+        type=["csv", "txt"],
+    )
+    if uploaded_file is not None:
+      try:
+        if uploaded_file.name.endswith(".csv"):
+          df_upload = pd.read_csv(uploaded_file)
+          col_name = (
+              "SMILES"
+              if "SMILES" in df_upload.columns
+              else df_upload.columns[0]
+          )
+          input_data_list = (
+              df_upload[col_name].dropna().astype(str).tolist()
+          )
+        else:
+          stringdata = uploaded_file.getvalue().decode("utf-8")
+          input_data_list = [
+              line.strip() for line in stringdata.splitlines() if line.strip()
+          ]
+
+        st.success(
+            f"Επιτυχής φόρτωση {len(input_data_list)} SMILES από το αρχείο!"
+        )
+      except Exception as e:
+        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+
+  if st.button("Αναζήτηση & Υπολογισμός", type="primary"):
+    if not input_data_list:
+      st.warning("Παρακαλώ εισάγετε ή ανεβάστε δεδομένα.")
+    else:
+      results = []
+      progress_bar = st.progress(0)
+
+      for i, item in enumerate(input_data_list):
+        if is_smiles_mode:
+          smi = item
+          display_name = item
+        else:
+          display_name = item
+          smi = get_smiles_from_pubchem(item)
+
+        if smi is None:
+          st.warning(
+              f"Δεν βρέθηκε η ένωση / SMILES: **{display_name}** στο PubChem."
+              " Παράλειψη."
+          )
+          progress_bar.progress((i + 1) / len(input_data_list))
+          continue
+
+        mol = Chem.MolFromSmiles(smi)
+        if mol is None:
+          st.warning(
+              f"Μη έγκυρο SMILES για την ένωση: **{display_name}**. Παράλειψη."
+          )
+          progress_bar.progress((i + 1) / len(input_data_list))
+          continue
+
+        mw = Descriptors.MolWt(mol)
+        logp = Crippen.MolLogP(mol)
+        heavy_atoms = mol.GetNumHeavyAtoms()
+        mr = Crippen.MolMR(mol)
+
+        violations = 0
+        if not (160 <= mw <= 480):
+          violations += 1
+        if not (-0.4 <= logp <= 5.6):
+          violations += 1
+        if not (20 <= heavy_atoms <= 70):
+          violations += 1
+        if not (40 <= mr <= 130):
+          violations += 1
+
+        status = "Passed (Drug-like)" if violations == 0 else "Failed"
 
         results.append({
-            "Molecule": mol_name,
+            "Όνομα / SMILES": display_name,
             "SMILES": smi,
-            "MW": mw,
-            "LogP": logp,
-            "Heavy Atoms": num_atoms,
-            "Molar Refractivity": mr,
-            "Ghose Status": "Passed ✅" if passed else "Failed ❌",
+            "Μοριακό Βάρος (MW)": round(mw, 2),
+            "LogP": round(logp, 2),
+            "Βαριά Άτομα": heavy_atoms,
+            "Molar Refractivity": round(mr, 2),
+            "Παραβάσεις": violations,
+            "Κατάσταση": status,
         })
 
-    if not results:
-      st.warning(
-          "Δεν βρέθηκαν έγκυρα μόρια προς επεξεργασία. Ελέγξτε την είσοδο σας."
-      )
-    else:
-      df_results = pd.DataFrame(results)
-      st.session_state.ghose_results = df_results
-      st.rerun()
+        progress_bar.progress((i + 1) / len(input_data_list))
+
+      if results:
+        st.session_state.ghose_results = results
+        st.rerun()
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & KPI METRICS
+# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
 # ==========================================
 else:
-  if st.button("🔄 Νέα Εισαγωγή / Αλλαγή Δεδομένων"):
+  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
     st.session_state.ghose_results = None
     st.rerun()
 
-  df_res = st.session_state.ghose_results
-  total_mols = len(df_res)
-  passed_mols = len(df_res[df_res["Ghose Status"] == "Passed ✅"])
-  success_rate = (
-      round((passed_mols / total_mols) * 100, 1) if total_mols > 0 else 0
-  )
+  df_results = pd.DataFrame(st.session_state.ghose_results)
 
-  # --- KPI METRICS ---
-  col1, col2, col3 = st.columns(3)
-  col1.metric("Συνολικά Μόρια", total_mols)
-  col2.metric("Επιτυχίες (Passed)", f"{passed_mols} ({success_rate}%)")
-  col3.metric("Αποτυχίες (Failed)", total_mols - passed_mols)
+  st.subheader("📊 Αποτελέσματα Ανάλυσης")
 
-  st.markdown("---")
-  st.subheader("📊 Πίνακας Αποτελεσμάτων Ghose Filter")
-  st.dataframe(df_res, use_container_width=True)
+  df_display = df_results.drop(columns=["SMILES"])
 
-  # --- ΛΗΨΗ ΑΡΧΕΙΟΥ (CSV, TXT, EXCEL) ---
-  st.markdown("### 📥 Λήψη Αναφοράς")
+  styled_df = df_display.style.apply(highlight_ghose, axis=1).format({
+      "Μοριακό Βάρος (MW)": "{:.2f}",
+      "LogP": "{:.2f}",
+      "Molar Refractivity": "{:.2f}",
+  })
+
+  st.dataframe(styled_df, use_container_width=True)
+
+  # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
+  st.markdown("### 📥 Λήψη Αποτελεσμάτων")
   file_format = st.radio(
       "Επιλέξτε μορφή αρχείου για λήψη:",
       options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
@@ -209,19 +270,21 @@ else:
   )
 
   if file_format == "CSV (.csv)":
-    file_data = df_res.to_csv(index=False).encode("utf-8")
-    file_name = "ghose_filter_report.csv"
+    file_data = df_display.to_csv(index=False).encode("utf-8")
+    file_name = "ghose_results.csv"
     mime_type = "text/csv"
+
   elif file_format == "Text (.txt)":
-    file_data = df_res.to_csv(sep="\t", index=False).encode("utf-8")
-    file_name = "ghose_filter_report.txt"
+    file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
+    file_name = "ghose_results.txt"
     mime_type = "text/plain"
-  else:
+
+  elif file_format == "Excel (.xlsx)":
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-      df_res.to_excel(writer, index=False, sheet_name="Ghose_Report")
+      df_display.to_excel(writer, index=False, sheet_name="Ghose_Filter")
     file_data = buffer.getvalue()
-    file_name = "ghose_filter_report.xlsx"
+    file_name = "ghose_results.xlsx"
     mime_type = (
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
@@ -233,3 +296,20 @@ else:
       mime=mime_type,
       type="primary",
   )
+
+st.markdown("""
+### What is the Ghose Filter?
+
+The **Ghose Filter** is a knowledge-based physicochemical filter introduced by Arup K. Ghose and colleagues to characterize small-molecule drug-likeness based on distributions observed across commercial pharmaceutical databases.
+
+According to the Ghose criteria, a compound falls within the drug-like chemical space when it satisfies the following ranges:
+
+- **Molecular Weight (MW):** 160 – 480 Da
+- **Lipophilicity (LogP):** -0.4 – 5.6
+- **Heavy Atom Count:** 20 – 70 atoms
+- **Molar Refractivity (MR):** 40 – 130
+
+### Scientific Reference
+
+Ghose, A. K., Viswanadhan, V. N., & Wendoloski, J. J. (1999). A knowledge-based approach in designing combinatorial or medicinal chemistry libraries for drug discovery. 1. A qualitative and quantitative characterization of known drug databases. *Journal of Combinatorial Chemistry, 1*(1), 55–68.
+""")
