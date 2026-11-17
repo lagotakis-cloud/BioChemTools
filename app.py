@@ -18,14 +18,6 @@ st.markdown(
 )
 st.markdown("---")
 
-# --- DASHBOARD STATS / KPIS ---
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Ενεργά Εργαλεία", "7", "Enterprise Ready")
-col2.metric("Υποστηριζόμενες Μορφές", "SMILES, InChI, SDF", "Bidirectional")
-col3.metric("Αλγόριθμοι RDKit", "Lipinski, Veber, ADMET", "High Precision")
-col4.metric("Hosting & Performance", "Streamlit Cloud", "Lightning Fast")
-
-st.markdown("---")
 
 # --- GRID NAVIGATION ΜΕ ΤΑ 7 ΕΡΓΑΛΕΙΑ ---
 st.subheader("🛠️ Διαθέσιμα Εργαλεία Σουίτας")
