@@ -12,6 +12,7 @@ st.set_page_config(
 )
 
 from components import render_navbar
+from components import render_footer
 
 render_navbar()
 
@@ -323,3 +324,5 @@ A high QED score suggests favorable physicochemical properties associated with c
 
 Bickerton, G. R., Paolini, G. V., Besnard, J., Muresan, S., & Hopkins, A. L. (2012). Quantifying the chemical beauty of drugs. *Nature Chemistry, 4*(2), 90–98.
 """)
+
+render_footer()
