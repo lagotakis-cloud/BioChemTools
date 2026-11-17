@@ -221,6 +221,70 @@ if st.session_state.veber_results is None:
         st.session_state.veber_results = results
         st.rerun()
 
+
+# ==========================================
+# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
+# ==========================================
+else:
+  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
+    st.session_state.veber_results = None
+    st.rerun()
+
+  df_results = pd.DataFrame(st.session_state.veber_results)
+
+  st.subheader("📊 Αποτελέσματα Ανάλυσης Veber")
+  st.info(
+      f"Ενεργό κριτήριο TPSA: **{'≤ 140 Å² (Cell Membranes)' if tpsa_limit == 140 else '≤ 90 Å² (BBB)'}**"
+  )
+
+  # Αφαίρεση βοηθητικών στηλών
+  df_display = df_results.drop(columns=["SMILES", "Όριο TPSA"])
+
+  # Εφαρμογή styling και μορφοποίηση
+  styled_df = df_display.style.apply(highlight_veber, axis=1).format(
+      {"TPSA (Å²)": "{:.2f}"}
+  )
+
+  st.dataframe(styled_df, use_container_width=True)
+
+  # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
+  st.markdown("### 📥 Λήψη Αποτελεσμάτων Veber")
+  file_format = st.radio(
+      "Επιλέξτε μορφή αρχείου για λήψη:",
+      options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
+      horizontal=True,
+      key="download_format_radio_veber",
+  )
+
+  if file_format == "CSV (.csv)":
+    file_data = df_display.to_csv(index=False).encode("utf-8")
+    file_name = "veber_results.csv"
+    mime_type = "text/csv"
+
+  elif file_format == "Text (.txt)":
+    file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
+    file_name = "veber_results.txt"
+    mime_type = "text/plain"
+
+  elif file_format == "Excel (.xlsx)":
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+      df_display.to_excel(writer, index=False, sheet_name="Veber_Rules")
+    file_data = buffer.getvalue()
+    file_name = "veber_results.xlsx"
+    mime_type = (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+  st.download_button(
+      label=f"⬇️ Λήψη αρχείου ({file_name})",
+      data=file_data,
+      file_name=file_name,
+      mime=mime_type,
+      type="primary",
+  )
+
+
 st.markdown("""
 ## Veber Rules Calculator
 
@@ -284,66 +348,3 @@ The two thresholds implemented in this tool should therefore be interpreted as p
 
 Veber, D. F., Johnson, S. R., Cheng, H.-Y., Smith, B. R., Ward, K. W., & Kopple, K. D. (2002). Molecular properties that influence the oral bioavailability of drug candidates. *Journal of Medicinal Chemistry, 45*(12), 2615–2623.
 """)
-
-
-# ==========================================
-# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
-# ==========================================
-else:
-  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
-    st.session_state.veber_results = None
-    st.rerun()
-
-  df_results = pd.DataFrame(st.session_state.veber_results)
-
-  st.subheader("📊 Αποτελέσματα Ανάλυσης Veber")
-  st.info(
-      f"Ενεργό κριτήριο TPSA: **{'≤ 140 Å² (Cell Membranes)' if tpsa_limit == 140 else '≤ 90 Å² (BBB)'}**"
-  )
-
-  # Αφαίρεση βοηθητικών στηλών
-  df_display = df_results.drop(columns=["SMILES", "Όριο TPSA"])
-
-  # Εφαρμογή styling και μορφοποίηση
-  styled_df = df_display.style.apply(highlight_veber, axis=1).format(
-      {"TPSA (Å²)": "{:.2f}"}
-  )
-
-  st.dataframe(styled_df, use_container_width=True)
-
-  # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
-  st.markdown("### 📥 Λήψη Αποτελεσμάτων Veber")
-  file_format = st.radio(
-      "Επιλέξτε μορφή αρχείου για λήψη:",
-      options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
-      horizontal=True,
-      key="download_format_radio_veber",
-  )
-
-  if file_format == "CSV (.csv)":
-    file_data = df_display.to_csv(index=False).encode("utf-8")
-    file_name = "veber_results.csv"
-    mime_type = "text/csv"
-
-  elif file_format == "Text (.txt)":
-    file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
-    file_name = "veber_results.txt"
-    mime_type = "text/plain"
-
-  elif file_format == "Excel (.xlsx)":
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-      df_display.to_excel(writer, index=False, sheet_name="Veber_Rules")
-    file_data = buffer.getvalue()
-    file_name = "veber_results.xlsx"
-    mime_type = (
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-  st.download_button(
-      label=f"⬇️ Λήψη αρχείου ({file_name})",
-      data=file_data,
-      file_name=file_name,
-      mime=mime_type,
-      type="primary",
-  )
