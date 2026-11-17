@@ -8,7 +8,7 @@ from components import render_navbar
 
 render_navbar()
 
-# --- TITLE & DESCRIPRTION ---
+# --- TITLE & DESCRIPTION ---
 st.set_page_config(
     page_title="Lipinski Rule of 5 | BiochemTools",
     page_icon="assets/organic.png",
@@ -74,9 +74,9 @@ if st.session_state.lipinski_results is None:
       "Choose data input:",
       (
           "Test with pre-existing names",
-          "Type PubChem Names",
+          "Type Compound Names",
           "Type SMILES Strings",
-          "Upload PubChem Names File",
+          "Upload Compound Names File",
           "Upload SMILES Strings File",
       ),
   )
@@ -94,7 +94,7 @@ if st.session_state.lipinski_results is None:
     ]
     st.write("Test List:", ", ".join(input_data_list))
 
-  elif input_option == "Type Names":
+  elif input_option == "Type Compound Names":
     user_input = st.text_area(
         "Type Compound Names (one in each line):",
         value="Aspirin\nSertraline\nVancomycin",
@@ -103,7 +103,7 @@ if st.session_state.lipinski_results is None:
         name.strip() for name in user_input.split("\n") if name.strip()
     ]
 
-  elif input_option == "Type SMILES":
+  elif input_option == "Type SMILES Strings":
     is_smiles_mode = True
     user_input = st.text_area(
         "Type SMILES strings (one in each line):",
@@ -115,9 +115,9 @@ if st.session_state.lipinski_results is None:
         smi.strip() for smi in user_input.split("\n") if smi.strip()
     ]
 
-  elif input_option == "Upload Names File":
+  elif input_option == "Upload Compound Names File":
     uploaded_file = st.file_uploader(
-        "Upload File (CSV with 'Name' column ή TXT with one name in each line):",
+        "Upload File (CSV with 'Name' column or TXT with one name per line):",
         type=["csv", "txt"],
     )
     if uploaded_file is not None:
@@ -137,15 +137,15 @@ if st.session_state.lipinski_results is None:
           ]
 
         st.success(
-            f"Successful {len(input_data_list)} compound names uploaded!"
+            f"Successfully uploaded {len(input_data_list)} compound names!"
         )
       except Exception as e:
         st.error(f"Error in uploading: {e}")
 
-  else:  # Ανέβασμα αρχείου SMILES
+  else:  # Upload SMILES Strings File
     is_smiles_mode = True
     uploaded_file = st.file_uploader(
-        "Upload File (CSV with 'SMILES' column ή TXT with one SMILES string in each line):",
+        "Upload File (CSV with 'SMILES' column or TXT with one SMILES per line):",
         type=["csv", "txt"],
     )
     if uploaded_file is not None:
@@ -167,7 +167,7 @@ if st.session_state.lipinski_results is None:
           ]
 
         st.success(
-            f"Successful {len(input_data_list)} SMILES strings uploaded!"
+            f"Successfully uploaded {len(input_data_list)} SMILES strings!"
         )
       except Exception as e:
         st.error(f"Error in uploading: {e}")
@@ -190,8 +190,9 @@ if st.session_state.lipinski_results is None:
         if smi is None:
           st.warning(
               f"Compound Name / SMILES: **{display_name}** not found in PubChem."
-              "Compound excluded."
+              " Compound excluded."
           )
+          progress_bar.progress((i + 1) / len(input_data_list))
           continue
 
         mol = Chem.MolFromSmiles(smi)
@@ -199,6 +200,7 @@ if st.session_state.lipinski_results is None:
           st.warning(
               f"Invalid SMILES string: **{display_name}**. Compound excluded."
           )
+          progress_bar.progress((i + 1) / len(input_data_list))
           continue
 
         mw = Descriptors.MolWt(mol)
@@ -219,9 +221,9 @@ if st.session_state.lipinski_results is None:
         status = "Passed (Drug-like)" if violations <= 1 else "Failed"
 
         results.append({
-            "Name/ SMILES": display_name,
+            "Name / SMILES": display_name,
             "SMILES": smi,
-            "Molecular Weight(MW)": round(mw, 2),
+            "Molecular Weight (MW)": round(mw, 2),
             "LogP": round(logp, 2),
             "H Bond Donors (HBD)": hbd,
             "HBA_val": hba,
@@ -250,10 +252,10 @@ else:
 
   df_display = df_results.drop(columns=["SMILES", "HBA_val"])
 
-  styled_df = (
-      df_display.style.apply(highlight_lipinski, axis=1)
-      .format({"Μοριακό Βάρος (MW)": "{:.2f}", "LogP": "{:.2f}"})
-  )
+  styled_df = df_display.style.apply(highlight_lipinski, axis=1).format({
+      "Molecular Weight (MW)": "{:.2f}",
+      "LogP": "{:.2f}",
+  })
 
   st.dataframe(styled_df, use_container_width=True)
 
@@ -293,6 +295,7 @@ else:
       mime=mime_type,
       type="primary",
   )
+
 st.markdown("""
 ### What is Lipinski's Rule of Five?
 
