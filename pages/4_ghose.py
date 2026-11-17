@@ -12,6 +12,7 @@ st.set_page_config(
 )
 
 from components import render_navbar
+from components import render_footer
 
 render_navbar()
 
@@ -348,3 +349,5 @@ However, like other heuristic filters, it should not be treated as an absolute p
 
 Ghose, A. K., Viswanadhan, V. N., & Wendoloski, J. J. (1999). A knowledge-based approach in designing combinatorial or medicinal chemistry libraries for drug discovery. 1. A qualitative and quantitative characterization of known drug databases. *Journal of Combinatorial Chemistry, 1*(1), 55–68.
 """)
+
+render_footer()
