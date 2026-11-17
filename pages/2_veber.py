@@ -311,15 +311,47 @@ else:
         type="primary",
     )
 
-
 st.markdown("""
-## Veber Rules Calculator
-
 ### What are Veber's Rules?
 
-Veber's Rules are widely used guidelines in drug discovery for evaluating the physicochemical properties of small molecules that may influence their oral bioavailability and membrane permeability.
+Veber's rules are key guidelines formulated by Valerie J. Veber and colleagues at GlaxoSmithKline (2002) to evaluate oral bioavailability and membrane permeability in drug discovery. 
+
+While Lipinski's Rule of Five focuses primarily on molecular weight, lipophilicity, and hydrogen bonding, Veber's work demonstrated that molecular flexibility and polar surface area are exceptionally powerful predictors of oral bioavailability in rats.
+
+According to Veber's criteria, compounds are more likely to exhibit good oral bioavailability if they satisfy:
+
+- **Rotatable Bonds (NRotB):** $\le 10$ (measuring molecular flexibility)
+- **Topological Polar Surface Area (TPSA):** $\le 140 \text{ \AA}^2$ (measuring polar atoms contribution, often $\le 60 \text{ \AA}^2$ for Blood-Brain Barrier penetration)
+
+### How Does This Tool Work?
+
+The **Veber's Rules & TPSA Screener** allows users to evaluate chemical compounds through multiple input methods:
+
+**1. Compound Name Search (PubChem)**
+Users enter compound names, and the tool queries the PubChem database to retrieve their canonical SMILES strings.
+
+**2. Direct SMILES Input**
+Users can manually input SMILES representations for instant, local analysis.
+
+**3. File Upload**
+Users can upload `.csv` or `.txt` files containing compound names or SMILES strings for high-throughput batch screening.
+
+### What Does the Tool Calculate?
+
+For each successfully processed compound, the tool evaluates:
+
+- **Rotatable Bond Count:** Counts single bonds that allow free rotation (excluding terminal bonds).
+- **Topological Polar Surface Area (TPSA):** Computes the surface sum over all polar atoms (primarily oxygen and nitrogen, including attached hydrogens).
+- **Blood-Brain Barrier (BBB) Screening:** Evaluates whether the TPSA and lipophilicity profiles suggest potential penetration into the central nervous system.
+- **Compliance Status:** Determines whether the compound satisfies Veber's criteria for oral bioavailability.
+
+### Scientific Interpretation and Limitations
+
+Veber's rules serve as an invaluable early-stage filter for molecular optimization. However, they represent statistical guidelines rather than absolute biological laws. Active transporter mechanisms, protein binding, and metabolic stability can allow certain molecules to bypass traditional topological constraints.
 
 ### Scientific Reference
 
-Veber, D. F., Johnson, S. R., Cheng, H.-Y., Smith, B. R., Ward, K. W., & Kopple, K. D. (2002). Molecular properties that influence the oral bioavailability of drug candidates. *Journal of Medicinal Chemistry, 45*(12), 2615–2623.
+Veber, D. F., Johnson, S. R., Cheng, H. Y., Smith, B. R., Ward, K. W., & Kopple, K. D. (2002). Molecular properties that influence oral bioavailability and drug likeness of candidates. *Journal of Medicinal Chemistry, 45*(12), 2615–2623.
 """)
+
+
