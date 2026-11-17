@@ -23,7 +23,7 @@ if "qed_results" not in st.session_state:
   st.session_state.qed_results = None
 
 
-# --- ΣΥΝΑΡΤΗΣΕΙΣ ---
+# --- FUNCTIONS ---
 def get_smiles_from_pubchem(compound_name):
   try:
     compounds = pcp.get_compounds(compound_name.strip(), "name")
@@ -36,7 +36,7 @@ def get_smiles_from_pubchem(compound_name):
 
 def highlight_qed(row):
   styles = [""] * len(row)
-  name_idx = row.index.get_loc("Όνομα / SMILES")
+  name_idx = row.index.get_loc("Name / SMILES")
   qed_idx = row.index.get_loc("QED Score")
 
   if row["QED Score"] >= 0.67:
@@ -52,24 +52,24 @@ def highlight_qed(row):
 
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ
+# 1. DATA INPUT
 # ==========================================
 if st.session_state.qed_results is None:
   input_option = st.radio(
-      "Επιλέξτε τρόπο εισαγωγής μορίων:",
+      "Choose data input:",
       (
-          "Δοκιμή με έτοιμα ονόματα",
-          "Πληκτρολόγηση ονομάτων",
-          "Πληκτρολόγηση SMILES",
-          "Ανέβασμα αρχείου ονομάτων",
-          "Ανέβασμα αρχείου SMILES",
+          "Test with pre-existing names",
+          "Type Compound Names",
+          "Type SMILES Strings",
+          "Upload Compound Names File",
+          "Upload SMILES Strings File",
       ),
   )
 
   input_data_list = []
   is_smiles_mode = False
 
-  if input_option == "Δοκιμή με έτοιμα ονόματα":
+  if input_option == "Test with pre-existing names":
     input_data_list = [
         "Aspirin",
         "Cyclosporin A",
@@ -77,21 +77,21 @@ if st.session_state.qed_results is None:
         "Vancomycin",
         "Omeprazole",
     ]
-    st.write("Δοκιμαστική λίστα:", ", ".join(input_data_list))
+    st.write("Test List:", ", ".join(input_data_list))
 
-  elif input_option == "Πληκτρολόγηση ονομάτων":
+  elif input_option == "Type Compound Names":
     user_input = st.text_area(
-        "Γράψτε τα ονόματα (ένα ανά γραμμή):",
+        "Type Compound Names (one per line):",
         value="Aspirin\nSertraline\nVancomycin",
     )
     input_data_list = [
         name.strip() for name in user_input.split("\n") if name.strip()
     ]
 
-  elif input_option == "Πληκτρολόγηση SMILES":
+  elif input_option == "Type SMILES Strings":
     is_smiles_mode = True
     user_input = st.text_area(
-        "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
+        "Type SMILES strings (one per line):",
         value=(
             "CC(=O)OC1=CC=CC=C1C(=O)O\nCC(C)CC1=CC=CC(=C1)C(C)C(=O)O\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C"
         ),
@@ -100,9 +100,9 @@ if st.session_state.qed_results is None:
         smi.strip() for smi in user_input.split("\n") if smi.strip()
     ]
 
-  elif input_option == "Ανέβασμα αρχείου ονομάτων":
+  elif input_option == "Upload Compound Names File":
     uploaded_file = st.file_uploader(
-        "Ανεβάστε αρχείο (CSV με στήλη 'Name' ή TXT με ένα όνομα ανά γραμμή):",
+        "Upload File (CSV with 'Name' column or TXT with one name per line):",
         type=["csv", "txt"],
     )
     if uploaded_file is not None:
@@ -122,15 +122,15 @@ if st.session_state.qed_results is None:
           ]
 
         st.success(
-            f"Επιτυχής φόρτωση {len(input_data_list)} εγγραφών από το αρχείο!"
+            f"Successfully uploaded {len(input_data_list)} compound names!"
         )
       except Exception as e:
-        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+        st.error(f"Error reading file: {e}")
 
-  else:  # Ανέβασμα αρχείου SMILES
+  else:  # Upload SMILES Strings File
     is_smiles_mode = True
     uploaded_file = st.file_uploader(
-        "Ανεβάστε αρχείο (CSV με στήλη 'SMILES' ή TXT με ένα SMILES ανά γραμμή):",
+        "Upload File (CSV with 'SMILES' column or TXT with one SMILES per line):",
         type=["csv", "txt"],
     )
     if uploaded_file is not None:
@@ -152,14 +152,14 @@ if st.session_state.qed_results is None:
           ]
 
         st.success(
-            f"Επιτυχής φόρτωση {len(input_data_list)} SMILES από το αρχείο!"
+            f"Successfully uploaded {len(input_data_list)} SMILES strings!"
         )
       except Exception as e:
-        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+        st.error(f"Error reading file: {e}")
 
-  if st.button("Αναζήτηση & Υπολογισμός", type="primary"):
+  if st.button("Search & Calculate", type="primary"):
     if not input_data_list:
-      st.warning("Παρακαλώ εισάγετε ή ανεβάστε δεδομένα.")
+      st.warning("Please enter or upload data.")
     else:
       results = []
       progress_bar = st.progress(0)
@@ -174,8 +174,8 @@ if st.session_state.qed_results is None:
 
         if smi is None:
           st.warning(
-              f"Δεν βρέθηκε η ένωση / SMILES: **{display_name}** στο PubChem."
-              " Παράλειψη."
+              f"Compound Name / SMILES: **{display_name}** not found in PubChem."
+              " Compound excluded."
           )
           progress_bar.progress((i + 1) / len(input_data_list))
           continue
@@ -183,7 +183,7 @@ if st.session_state.qed_results is None:
         mol = Chem.MolFromSmiles(smi)
         if mol is None:
           st.warning(
-              f"Μη έγκυρο SMILES για την ένωση: **{display_name}**. Παράλειψη."
+              f"Invalid SMILES string: **{display_name}**. Compound excluded."
           )
           progress_bar.progress((i + 1) / len(input_data_list))
           continue
@@ -194,9 +194,9 @@ if st.session_state.qed_results is None:
         tpsa = round(Descriptors.TPSA(mol), 2)
 
         results.append({
-            "Όνομα / SMILES": display_name,
+            "Name / SMILES": display_name,
             "SMILES": smi,
-            "Μοριακό Βάρος (MW)": mw,
+            "Molecular Weight (MW)": mw,
             "LogP": logp,
             "TPSA (Å²)": tpsa,
             "QED Score": qed_score,
@@ -209,21 +209,21 @@ if st.session_state.qed_results is None:
         st.rerun()
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
+# 2. RESULTS & DOWNLOAD
 # ==========================================
 else:
-  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
+  if st.button("🔄 New Search / Change Data"):
     st.session_state.qed_results = None
     st.rerun()
 
   df_results = pd.DataFrame(st.session_state.qed_results)
 
-  st.subheader("📊 Αποτελέσματα Ανάλυσης")
+  st.subheader("📊 Analysis Results")
 
   df_display = df_results.drop(columns=["SMILES"])
 
   styled_df = df_display.style.apply(highlight_qed, axis=1).format({
-      "Μοριακό Βάρος (MW)": "{:.2f}",
+      "Molecular Weight (MW)": "{:.2f}",
       "LogP": "{:.2f}",
       "TPSA (Å²)": "{:.2f}",
       "QED Score": "{:.3f}",
@@ -231,10 +231,10 @@ else:
 
   st.dataframe(styled_df, use_container_width=True)
 
-  # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
-  st.markdown("### 📥 Λήψη Αποτελεσμάτων")
+  # --- DOWNLOAD OPTIONS ---
+  st.markdown("### 📥 Download Results")
   file_format = st.radio(
-      "Επιλέξτε μορφή αρχείου για λήψη:",
+      "Choose file format for download:",
       options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
       horizontal=True,
       key="download_format_radio_qed",
@@ -261,7 +261,7 @@ else:
     )
 
   st.download_button(
-      label=f"⬇️ Λήψη αρχείου ({file_name})",
+      label=f"⬇️ Download file ({file_name})",
       data=file_data,
       file_name=file_name,
       mime=mime_type,
@@ -271,9 +271,9 @@ else:
 st.markdown("""
 ### What is QED (Quantitative Estimate of Drug-Likeness)?
 
-**QED** (Quantitative Estimate of Drug-Likeness) is a widely recognized metric in modern drug discovery and cheminformatics used to evaluate the overall "drug-likeness" or "chemical beauty" of small molecules. 
+**QED** (Quantitative Estimate of Drug-Likeness) is a widely recognized metric in modern drug discovery and cheminformatics used to evaluate the overall "drug-likeness" or "chemical beauty" of small molecules.
 
-Unlike traditional rule-based filters (such as Lipinski's Rule of Five) which rely on binary thresholds (pass/fail based on strict cutoffs), QED is a continuous numerical score ranging from **0** (least drug-like) to **1** (most drug-like). 
+Unlike traditional rule-based filters (such as Lipinski's Rule of Five) which rely on binary thresholds (pass/fail based on strict cutoffs), QED is a continuous numerical score ranging from **0** (least drug-like) to **1** (most drug-like).
 
 The concept was introduced by G. Richard Bickerton and colleagues and is based on the underlying principles of desirability functions. It combines eight fundamental physicochemical descriptors into a unified score:
 
@@ -304,7 +304,7 @@ Users can upload a `.csv` or `.txt` file containing lists of compound names or S
 
 ### What Does the Tool Calculate?
 
-For each successfully processed compound, the application computes key molecular properties alongside the final QED score. 
+For each successfully processed compound, the application computes key molecular properties alongside the final QED score.
 
 The results empower researchers to:
 
@@ -315,7 +315,7 @@ The results empower researchers to:
 
 ### Scientific Interpretation and Limitations
 
-While QED provides an excellent statistical estimation of how closely a molecule resembles established oral drugs, it is intended as a guiding metric rather than an absolute rule. 
+While QED provides an excellent statistical estimation of how closely a molecule resembles established oral drugs, it is intended as a guiding metric rather than an absolute rule.
 
 A high QED score suggests favorable physicochemical properties associated with clinical candidate success, but factors such as target-specific binding affinity, metabolic stability, cellular toxicity, and pharmacokinetics must also be evaluated in parallel.
 
