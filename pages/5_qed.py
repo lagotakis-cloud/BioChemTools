@@ -2,206 +2,245 @@ import io
 import pandas as pd
 import pubchempy as pcp
 from rdkit import Chem
-from rdkit.Chem import Crippen
-from rdkit.Chem import Descriptors
-from rdkit.Chem import QED
+from rdkit.Chem import Crippen, Descriptors, QED
 import streamlit as st
 
 st.set_page_config(
-    page_title="QED Drug-Likeness Screener", page_icon="📈", layout="wide"
+    page_title="QED Drug-Likeness Evaluator | BiochemTools",
+    page_icon="assets/organic.png",
+    layout="wide",
 )
 
 from components import render_navbar
 
 render_navbar()
 
-st.title("📈 QED (Quantitative Estimate of Drug-Likeness)")
-st.markdown(
-    "Υπολογισμός του σύγχρονου ποσοτικού δείκτη QED (από 0 έως 1) για την"
-    " αξιολόγηση της φαρμακευτικής ελκυστικότητας μορίων."
-)
+st.title("QED Drug-Likeness Evaluator")
 st.markdown("---")
 
 # --- INITIALIZE SESSION STATE ---
 if "qed_results" not in st.session_state:
   st.session_state.qed_results = None
 
+
+# --- ΣΥΝΑΡΤΗΣΕΙΣ ---
+def get_smiles_from_pubchem(compound_name):
+  try:
+    compounds = pcp.get_compounds(compound_name.strip(), "name")
+    if compounds:
+      return compounds[0].canonical_smiles
+    return None
+  except Exception:
+    return None
+
+
+def highlight_qed(row):
+  styles = [""] * len(row)
+  name_idx = row.index.get_loc("Όνομα / SMILES")
+  qed_idx = row.index.get_loc("QED Score")
+
+  if row["QED Score"] >= 0.67:
+    color = "background-color: #d4edda; color: #155724; font-weight: bold;"
+  elif row["QED Score"] >= 0.35:
+    color = "background-color: #fff3cd; color: #856404; font-weight: bold;"
+  else:
+    color = "background-color: #f8d7da; color: #721c24; font-weight: bold;"
+
+  styles[name_idx] = color
+  styles[qed_idx] = color
+  return styles
+
+
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ (ΜΕ ΦΟΡΜΑ)
+# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ
 # ==========================================
 if st.session_state.qed_results is None:
-  with st.form("qed_input_form"):
-    input_option = st.radio(
-        "Επιλέξτε τρόπο εισαγωγής δεδομένων:",
-        (
-            "Δοκιμή με έτοιμη λίστα",
-            "Πληκτρολόγηση Ονομάτων (ένα ανά γραμμή)",
-            "Πληκτρολόγηση SMILES (ένα ανά γραμμή)",
-            "Ανέβασμα αρχείου Ονομάτων (.csv / .txt)",
-            "Ανέβασμα αρχείου SMILES (.csv / .txt)",
+  input_option = st.radio(
+      "Επιλέξτε τρόπο εισαγωγής μορίων:",
+      (
+          "Δοκιμή με έτοιμα ονόματα",
+          "Πληκτρολόγηση ονομάτων",
+          "Πληκτρολόγηση SMILES",
+          "Ανέβασμα αρχείου ονομάτων",
+          "Ανέβασμα αρχείου SMILES",
+      ),
+  )
+
+  input_data_list = []
+  is_smiles_mode = False
+
+  if input_option == "Δοκιμή με έτοιμα ονόματα":
+    input_data_list = [
+        "Aspirin",
+        "Cyclosporin A",
+        "Ibuprofen",
+        "Vancomycin",
+        "Omeprazole",
+    ]
+    st.write("Δοκιμαστική λίστα:", ", ".join(input_data_list))
+
+  elif input_option == "Πληκτρολόγηση ονομάτων":
+    user_input = st.text_area(
+        "Γράψτε τα ονόματα (ένα ανά γραμμή):",
+        value="Aspirin\nSertraline\nVancomycin",
+    )
+    input_data_list = [
+        name.strip() for name in user_input.split("\n") if name.strip()
+    ]
+
+  elif input_option == "Πληκτρολόγηση SMILES":
+    is_smiles_mode = True
+    user_input = st.text_area(
+        "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
+        value=(
+            "CC(=O)OC1=CC=CC=C1C(=O)O\nCC(C)CC1=CC=CC(=C1)C(C)C(=O)O\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C"
         ),
     )
+    input_data_list = [
+        smi.strip() for smi in user_input.split("\n") if smi.strip()
+    ]
 
-    default_names = "Aspirin\nParacetamol\nIbuprofen\nCaffeine\nEnalapril"
-    default_smiles = (
-        "CC(=O)Oc1ccccc1C(=O)O\nCC(=O)Nc1ccc(O)cc1\nCC(C)Cc1ccc(cc1)C(C)C(=O)O"
+  elif input_option == "Ανέβασμα αρχείου ονομάτων":
+    uploaded_file = st.file_uploader(
+        "Ανεβάστε αρχείο (CSV με στήλη 'Name' ή TXT με ένα όνομα ανά γραμμή):",
+        type=["csv", "txt"],
     )
+    if uploaded_file is not None:
+      try:
+        if uploaded_file.name.endswith(".csv"):
+          df_upload = pd.read_csv(uploaded_file)
+          col_name = (
+              "Name" if "Name" in df_upload.columns else df_upload.columns[0]
+          )
+          input_data_list = (
+              df_upload[col_name].dropna().astype(str).tolist()
+          )
+        else:
+          stringdata = uploaded_file.getvalue().decode("utf-8")
+          input_data_list = [
+              line.strip() for line in stringdata.splitlines() if line.strip()
+          ]
 
-    text_input_data = ""
-    uploaded_file = None
+        st.success(
+            f"Επιτυχής φόρτωση {len(input_data_list)} εγγραφών από το αρχείο!"
+        )
+      except Exception as e:
+        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
 
-    if input_option == "Δοκιμή με έτοιμη λίστα":
-      st.markdown(
-          "**Προεπιλεγμένα μόρια:** Aspirin, Paracetamol, Ibuprofen, Caffeine,"
-          " Enalapril"
-      )
-    elif input_option == "Πληκτρολόγηση Ονομάτων (ένα ανά γραμμή)":
-      text_input_data = st.text_area(
-          "Εισάγετε ονόματα (ένα ανά γραμμή):", value=default_names, height=120
-      )
-    elif input_option == "Πληκτρολόγηση SMILES (ένα ανά γραμμή)":
-      text_input_data = st.text_area(
-          "Εισάγετε SMILES strings (ένα ανά γραμμή):",
-          value=default_smiles,
-          height=120,
-      )
-    elif input_option == "Ανέβασμα αρχείου Ονομάτων (.csv / .txt)":
-      uploaded_file = st.file_uploader(
-          "Ανεβάστε αρχείο με στήλη ονομάτων:", type=["csv", "txt"]
-      )
+  else:  # Ανέβασμα αρχείου SMILES
+    is_smiles_mode = True
+    uploaded_file = st.file_uploader(
+        "Ανεβάστε αρχείο (CSV με στήλη 'SMILES' ή TXT με ένα SMILES ανά γραμμή):",
+        type=["csv", "txt"],
+    )
+    if uploaded_file is not None:
+      try:
+        if uploaded_file.name.endswith(".csv"):
+          df_upload = pd.read_csv(uploaded_file)
+          col_name = (
+              "SMILES"
+              if "SMILES" in df_upload.columns
+              else df_upload.columns[0]
+          )
+          input_data_list = (
+              df_upload[col_name].dropna().astype(str).tolist()
+          )
+        else:
+          stringdata = uploaded_file.getvalue().decode("utf-8")
+          input_data_list = [
+              line.strip() for line in stringdata.splitlines() if line.strip()
+          ]
+
+        st.success(
+            f"Επιτυχής φόρτωση {len(input_data_list)} SMILES από το αρχείο!"
+        )
+      except Exception as e:
+        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+
+  if st.button("Αναζήτηση & Υπολογισμός", type="primary"):
+    if not input_data_list:
+      st.warning("Παρακαλώ εισάγετε ή ανεβάστε δεδομένα.")
     else:
-      uploaded_file = st.file_uploader(
-          "Ανεβάστε αρχείο με στήλη SMILES:", type=["csv", "txt"]
-      )
+      results = []
+      progress_bar = st.progress(0)
 
-    submitted = st.form_submit_button("Υπολογισμός QED Score", type="primary")
+      for i, item in enumerate(input_data_list):
+        if is_smiles_mode:
+          smi = item
+          display_name = item
+        else:
+          display_name = item
+          smi = get_smiles_from_pubchem(item)
 
-  if submitted:
-    raw_items = []
+        if smi is None:
+          st.warning(
+              f"Δεν βρέθηκε η ένωση / SMILES: **{display_name}** στο PubChem."
+              " Παράλειψη."
+          )
+          progress_bar.progress((i + 1) / len(input_data_list))
+          continue
 
-    if input_option == "Δοκιμή με έτοιμη λίστα":
-      raw_items = [
-          "Aspirin",
-          "Paracetamol",
-          "Ibuprofen",
-          "Caffeine",
-          "Enalapril",
-      ]
-      mode = "name"
-    elif "Πληκτρολόγηση Ονομάτων" in input_option:
-      raw_items = [
-          line.strip() for line in text_input_data.split("\n") if line.strip()
-      ]
-      mode = "name"
-    elif "Πληκτρολόγηση SMILES" in input_option:
-      raw_items = [
-          line.strip() for line in text_input_data.split("\n") if line.strip()
-      ]
-      mode = "smiles"
-    elif "Ανέβασμα αρχείου Ονομάτων" in input_option:
-      mode = "name"
-      if uploaded_file is not None:
-        try:
-          if uploaded_file.name.endswith(".csv"):
-            df_up = pd.read_csv(uploaded_file)
-            raw_items = df_up.iloc[:, 0].dropna().astype(str).tolist()
-          else:
-            stringdata = uploaded_file.getvalue().decode("utf-8")
-            raw_items = [
-                l.strip() for l in stringdata.splitlines() if l.strip()
-            ]
-        except Exception as e:
-          st.error(f"Σφάλμα ανάγνωσης αρχείου: {e}")
-    else:
-      mode = "smiles"
-      if uploaded_file is not None:
-        try:
-          if uploaded_file.name.endswith(".csv"):
-            df_up = pd.read_csv(uploaded_file)
-            raw_items = df_up.iloc[:, 0].dropna().astype(str).tolist()
-          else:
-            stringdata = uploaded_file.getvalue().decode("utf-8")
-            raw_items = [
-                l.strip() for l in stringdata.splitlines() if l.strip()
-            ]
-        except Exception as e:
-          st.error(f"Σφάλμα ανάγνωσης αρχείου: {e}")
-
-    results = []
-
-    for item in raw_items:
-      mol = None
-      mol_name = item
-      smi = ""
-
-      if mode == "name":
-        try:
-          comps = pcp.get_compounds(item, "name")
-          if comps:
-            smi = comps[0].canonical_smiles
-            mol = Chem.MolFromSmiles(smi)
-        except Exception:
-          pass
-      else:
-        smi = item
         mol = Chem.MolFromSmiles(smi)
-        mol_name = "Custom_SMILES"
+        if mol is None:
+          st.warning(
+              f"Μη έγκυρο SMILES για την ένωση: **{display_name}**. Παράλειψη."
+          )
+          progress_bar.progress((i + 1) / len(input_data_list))
+          continue
 
-      if mol is not None:
         qed_score = round(QED.qed(mol), 3)
         mw = round(Descriptors.MolWt(mol), 2)
         logp = round(Crippen.MolLogP(mol), 2)
+        tpsa = round(Descriptors.TPSA(mol), 2)
 
         if qed_score >= 0.67:
-          classification = "High (Drug-like) ✅"
+          status = "High Drug-likeness (≥ 0.67)"
         elif qed_score >= 0.35:
-          classification = "Moderate ℹ️"
+          status = "Moderate Drug-likeness (0.35–0.66)"
         else:
-          classification = "Low ⚠️"
+          status = "Low Drug-likeness (< 0.35)"
 
         results.append({
-            "Molecule": mol_name,
+            "Όνομα / SMILES": display_name,
             "SMILES": smi,
-            "MW": mw,
+            "Μοριακό Βάρος (MW)": mw,
             "LogP": logp,
+            "TPSA (Å²)": tpsa,
             "QED Score": qed_score,
-            "Drug-Likeness": classification,
+            "Κατάσταση": status,
         })
 
-    if not results:
-      st.warning(
-          "Δεν βρέθηκαν έγκυρα μόρια προς επεξεργασία. Ελέγξτε την είσοδό σας."
-      )
-    else:
-      df_results = pd.DataFrame(results)
-      st.session_state.qed_results = df_results
-      st.rerun()
+        progress_bar.progress((i + 1) / len(input_data_list))
+
+      if results:
+        st.session_state.qed_results = results
+        st.rerun()
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & KPI METRICS
+# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
 # ==========================================
 else:
-  if st.button("🔄 Νέα Εισαγωγή / Αλλαγή Δεδομένων"):
+  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
     st.session_state.qed_results = None
     st.rerun()
 
-  df_res = st.session_state.qed_results
-  total_mols = len(df_res)
-  avg_qed = round(df_res["QED Score"].mean(), 3) if total_mols > 0 else 0.0
-  high_qed_count = len(df_res[df_res["QED Score"] >= 0.67])
+  df_results = pd.DataFrame(st.session_state.qed_results)
 
-  # --- KPI METRICS ---
-  col1, col2, col3 = st.columns(3)
-  col1.metric("Συνολικά Μόρια", total_mols)
-  col2.metric("Μέσο QED Score", avg_qed)
-  col3.metric("Υψηλό QED (≥ 0.67)", high_qed_count)
+  st.subheader("📊 Αποτελέσματα Ανάλυσης")
 
-  st.markdown("---")
-  st.subheader("📊 Πίνακας Αποτελεσμάτων QED")
-  st.dataframe(df_res, use_container_width=True)
+  df_display = df_results.drop(columns=["SMILES"])
 
-  # --- ΛΗΨΗ ΑΡΧΕΙΟΥ (CSV, TXT, EXCEL) ---
-  st.markdown("### 📥 Λήψη Αναφοράς")
+  styled_df = df_display.style.apply(highlight_qed, axis=1).format({
+      "Μοριακό Βάρος (MW)": "{:.2f}",
+      "LogP": "{:.2f}",
+      "TPSA (Å²)": "{:.2f}",
+      "QED Score": "{:.3f}",
+  })
+
+  st.dataframe(styled_df, use_container_width=True)
+
+  # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
+  st.markdown("### 📥 Λήψη Αποτελεσμάτων")
   file_format = st.radio(
       "Επιλέξτε μορφή αρχείου για λήψη:",
       options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
@@ -210,19 +249,21 @@ else:
   )
 
   if file_format == "CSV (.csv)":
-    file_data = df_res.to_csv(index=False).encode("utf-8")
-    file_name = "qed_evaluation_report.csv"
+    file_data = df_display.to_csv(index=False).encode("utf-8")
+    file_name = "qed_results.csv"
     mime_type = "text/csv"
+
   elif file_format == "Text (.txt)":
-    file_data = df_res.to_csv(sep="\t", index=False).encode("utf-8")
-    file_name = "qed_evaluation_report.txt"
+    file_data = df_display.to_csv(sep="\t", index=False).encode("utf-8")
+    file_name = "qed_results.txt"
     mime_type = "text/plain"
-  else:
+
+  elif file_format == "Excel (.xlsx)":
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-      df_res.to_excel(writer, index=False, sheet_name="QED_Report")
+      df_display.to_excel(writer, index=False, sheet_name="QED_Score")
     file_data = buffer.getvalue()
-    file_name = "qed_evaluation_report.xlsx"
+    file_name = "qed_results.xlsx"
     mime_type = (
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
@@ -234,3 +275,21 @@ else:
       mime=mime_type,
       type="primary",
   )
+
+st.markdown("""
+### What is QED (Quantitative Estimate of Drug-Likeness)?
+
+**QED** is a continuous drug-likeness metric (ranging from **0** to **1**) developed by G. Richard Bickerton and colleagues. Unlike binary rule-based filters (such as Lipinski's Rule of Five or the Ghose Filter), QED combines eight physicochemical descriptors into a single desirability score:
+
+- **Molecular Weight (MW)**
+- **Lipophilicity (ALogP)**
+- **Hydrogen Bond Donors (HBD) & Acceptors (HBA)**
+- **Topological Polar Surface Area (TPSA)**
+- **Rotatable Bonds (ROTB)**
+- **Aromatic Rings (AROM)**
+- **Structural Alerts (ALERTS)**
+
+### Scientific Reference
+
+Bickerton, G. R., Paolini, G. V., Besnard, J., Muresan, S., & Hopkins, A. L. (2012). Quantifying the chemical beauty of drugs. *Nature Chemistry, 4*(2), 90–98.
+""")
