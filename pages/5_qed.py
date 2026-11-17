@@ -193,13 +193,6 @@ if st.session_state.qed_results is None:
         logp = round(Crippen.MolLogP(mol), 2)
         tpsa = round(Descriptors.TPSA(mol), 2)
 
-        if qed_score >= 0.67:
-          status = "High Drug-likeness (≥ 0.67)"
-        elif qed_score >= 0.35:
-          status = "Moderate Drug-likeness (0.35–0.66)"
-        else:
-          status = "Low Drug-likeness (< 0.35)"
-
         results.append({
             "Όνομα / SMILES": display_name,
             "SMILES": smi,
@@ -207,7 +200,6 @@ if st.session_state.qed_results is None:
             "LogP": logp,
             "TPSA (Å²)": tpsa,
             "QED Score": qed_score,
-            "Κατάσταση": status,
         })
 
         progress_bar.progress((i + 1) / len(input_data_list))
@@ -279,15 +271,53 @@ else:
 st.markdown("""
 ### What is QED (Quantitative Estimate of Drug-Likeness)?
 
-**QED** is a continuous drug-likeness metric (ranging from **0** to **1**) developed by G. Richard Bickerton and colleagues. Unlike binary rule-based filters (such as Lipinski's Rule of Five or the Ghose Filter), QED combines eight physicochemical descriptors into a single desirability score:
+**QED** (Quantitative Estimate of Drug-Likeness) is a widely recognized metric in modern drug discovery and cheminformatics used to evaluate the overall "drug-likeness" or "chemical beauty" of small molecules. 
+
+Unlike traditional rule-based filters (such as Lipinski's Rule of Five) which rely on binary thresholds (pass/fail based on strict cutoffs), QED is a continuous numerical score ranging from **0** (least drug-like) to **1** (most drug-like). 
+
+The concept was introduced by G. Richard Bickerton and colleagues and is based on the underlying principles of desirability functions. It combines eight fundamental physicochemical descriptors into a unified score:
 
 - **Molecular Weight (MW)**
 - **Lipophilicity (ALogP)**
-- **Hydrogen Bond Donors (HBD) & Acceptors (HBA)**
+- **Hydrogen Bond Donors (HBD)**
+- **Hydrogen Bond Acceptors (HBA)**
 - **Topological Polar Surface Area (TPSA)**
 - **Rotatable Bonds (ROTB)**
 - **Aromatic Rings (AROM)**
 - **Structural Alerts (ALERTS)**
+
+### How Does This Tool Work?
+
+The **QED Evaluator** allows researchers to assess one or multiple chemical compounds through three flexible input methods:
+
+**1. Compound Name Search (PubChem)**
+
+Users can enter the commercial or generic name of a chemical compound. The tool queries the PubChem database to automatically retrieve its canonical SMILES string and molecular structure.
+
+**2. Direct SMILES Input**
+
+Users can directly input SMILES strings to calculate and evaluate proprietary or novel chemical structures without requiring database lookups.
+
+**3. File Upload**
+
+Users can upload a `.csv` or `.txt` file containing lists of compound names or SMILES strings, enabling high-throughput in silico screening and batch analysis in a single operation.
+
+### What Does the Tool Calculate?
+
+For each successfully processed compound, the application computes key molecular properties alongside the final QED score. 
+
+The results empower researchers to:
+
+- Quantify the overall drug-likeness of candidate molecules on a continuous scale.
+- Compare multiple compounds within a unified tabular format.
+- Quickly identify high-potential candidates (typically indicated by a QED score ≥ 0.67).
+- Export processed reports securely in multiple formats (`.csv`, `.txt`, `.xlsx`).
+
+### Scientific Interpretation and Limitations
+
+While QED provides an excellent statistical estimation of how closely a molecule resembles established oral drugs, it is intended as a guiding metric rather than an absolute rule. 
+
+A high QED score suggests favorable physicochemical properties associated with clinical candidate success, but factors such as target-specific binding affinity, metabolic stability, cellular toxicity, and pharmacokinetics must also be evaluated in parallel.
 
 ### Scientific Reference
 
