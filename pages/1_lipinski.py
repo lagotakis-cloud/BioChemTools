@@ -16,64 +16,6 @@ st.set_page_config(
 )
 st.title("Lipinski Rule of 5 Checker")
 
-st.markdown("""
-## Lipinski's Rule of Five Calculator
-
-### What is Lipinski's Rule of Five?
-
-Lipinski's Rule of Five (Ro5) is a widely used guideline in drug discovery and development for evaluating the drug-likeness of small molecules, particularly in relation to their potential oral bioavailability.
-
-The rule was introduced by Christopher A. Lipinski and colleagues and is based on the observation that compounds with certain physicochemical properties are more likely to exhibit favorable absorption and permeability characteristics.
-
-According to Lipinski's Rule of Five, a compound is more likely to have favorable oral absorption when it satisfies the following criteria:
-
-- **Molecular Weight (MW):** ≤ 500 Da
-- **Lipophilicity (LogP):** ≤ 5
-- **Hydrogen Bond Donors (HBD):** ≤ 5
-- **Hydrogen Bond Acceptors (HBA):** ≤ 10
-
-The rule is commonly used during the early stages of drug discovery to identify compounds with physicochemical properties that may be compatible with oral drug development.
-
-### How Does This Tool Work?
-
-The **Lipinski's Rule of Five Calculator** allows users to evaluate one or multiple chemical compounds through three different input methods:
-
-**1. Compound Name Search (PubChem)**
-
-Users can enter the name of a chemical compound, and the tool performs a search through the PubChem database to retrieve the corresponding molecular information.
-
-**2. Direct SMILES Input**
-
-Users can manually enter the SMILES (Simplified Molecular Input Line Entry System) representation of a compound. This allows direct analysis without requiring a database search.
-
-**3. TXT File Upload**
-
-Users can upload a `.txt` file containing SMILES strings, enabling the analysis of multiple compounds in a single operation.
-
-### What Does the Tool Calculate?
-
-For each successfully processed compound, the calculator evaluates the relevant physicochemical properties and checks them against Lipinski's Rule of Five criteria.
-
-The results allow users to:
-
-- Review the calculated molecular properties.
-- Identify which Lipinski criteria are satisfied or violated.
-- Determine the total number of rule violations for each compound.
-- Perform an initial assessment of the compound's drug-likeness.
-
-### Scientific Interpretation and Limitations
-
-Lipinski's Rule of Five is a screening guideline rather than a definitive predictor of drug efficacy, safety, or oral bioavailability.
-
-A compound that satisfies all four criteria is not necessarily orally bioavailable, while compounds that violate one or more criteria should not automatically be considered unsuitable for drug development.
-
-The results should therefore be interpreted alongside additional physicochemical properties, ADMET predictions, experimental data, and other relevant drug discovery considerations.
-
-### Scientific Reference
-
-Lipinski, C. A., Lombardo, F., Dominy, B. W., & Feeney, P. J. (2001). Experimental and computational approaches to estimate solubility and permeability in drug discovery and development settings. *Advanced Drug Delivery Reviews, 46*(1–3), 3–26.
-""")
-
 st.markdown("---")
 
 # --- INITIALIZE SESSION STATE ---
@@ -353,3 +295,58 @@ else:
       mime=mime_type,
       type="primary",
   )
+st.markdown("""
+### What is Lipinski's Rule of Five?
+
+Lipinski's Rule of Five (Ro5) is a widely used guideline in drug discovery and development for evaluating the drug-likeness of small molecules, particularly in relation to their potential oral bioavailability.
+
+The rule was introduced by Christopher A. Lipinski and colleagues and is based on the observation that compounds with certain physicochemical properties are more likely to exhibit favorable absorption and permeability characteristics.
+
+According to Lipinski's Rule of Five, a compound is more likely to have favorable oral absorption when it satisfies the following criteria:
+
+- **Molecular Weight (MW):** ≤ 500 Da
+- **Lipophilicity (LogP):** ≤ 5
+- **Hydrogen Bond Donors (HBD):** ≤ 5
+- **Hydrogen Bond Acceptors (HBA):** ≤ 10
+
+The rule is commonly used during the early stages of drug discovery to identify compounds with physicochemical properties that may be compatible with oral drug development.
+
+### How Does This Tool Work?
+
+The **Lipinski's Rule of Five Calculator** allows users to evaluate one or multiple chemical compounds through three different input methods:
+
+**1. Compound Name Search (PubChem)**
+
+Users can enter the name of a chemical compound, and the tool performs a search through the PubChem database to retrieve the corresponding molecular information.
+
+**2. Direct SMILES Input**
+
+Users can manually enter the SMILES (Simplified Molecular Input Line Entry System) representation of a compound. This allows direct analysis without requiring a database search.
+
+**3. File Upload**
+
+Users can upload a `.csv` or a `.txt` file containing SMILES strings, enabling the analysis of multiple compounds in a single operation.
+
+### What Does the Tool Calculate?
+
+For each successfully processed compound, the calculator evaluates the relevant physicochemical properties and checks them against Lipinski's Rule of Five criteria.
+
+The results allow users to:
+
+- Review the calculated molecular properties.
+- Identify which Lipinski criteria are satisfied or violated.
+- Determine the total number of rule violations for each compound.
+- Perform an initial assessment of the compound's drug-likeness.
+
+### Scientific Interpretation and Limitations
+
+Lipinski's Rule of Five is a screening guideline rather than a definitive predictor of drug efficacy, safety, or oral bioavailability.
+
+A compound that satisfies all four criteria is not necessarily orally bioavailable, while compounds that violate one or more criteria should not automatically be considered unsuitable for drug development.
+
+The results should therefore be interpreted alongside additional physicochemical properties, ADMET predictions, experimental data, and other relevant drug discovery considerations.
+
+### Scientific Reference
+
+Lipinski, C. A., Lombardo, F., Dominy, B. W., & Feeney, P. J. (2001). Experimental and computational approaches to estimate solubility and permeability in drug discovery and development settings. *Advanced Drug Delivery Reviews, 46*(1–3), 3–26.
+""")
