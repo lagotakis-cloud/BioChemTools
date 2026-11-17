@@ -48,8 +48,22 @@ def render_navbar():
     with col7:
         st.page_link("pages/6_names_to_smiles.py", label="🔤 Name ⇄ SMILES")
     with col8:
-        # Empty space / placeholder for balanced grid alignment
         st.empty()
 
     # Small spacer after navbar before page content begins
     st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+
+
+def render_footer():
+    """Renders a clean, professional footer with contact info across all pages."""
+    st.markdown(
+        """
+        <hr style="margin-top: 50px; margin-bottom: 20px; border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 14px; padding-bottom: 30px;">
+            <p>🧬 <b>biochemtools.tech</b> | Enterprise Cheminformatics & In Silico Screening Suite</p>
+            <p>📧 Contact & Support: <a href="mailto:info@biochemtools.tech" style="color: #4CAF50; text-decoration: none;">info@biochemtools.tech</a></p>
+            <p style="font-size: 12px; margin-top: 5px; color: rgba(255, 255, 255, 0.4);">© 2026 BiochemTools. All rights reserved.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
