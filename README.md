@@ -6,7 +6,7 @@ Designed with a **"First-Line Triage"** philosophy, the platform enables secure,
 
 ---
 
-## 🛠️ The 6 Core Suite Tools
+## The 6 Core Suite Tools
 
 The platform consists of six specialized, standalone tools integrated via a seamless sticky navigation header:
 
@@ -25,7 +25,7 @@ The platform consists of six specialized, standalone tools integrated via a seam
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
 - **Local & Secure Processing:** Keeps your proprietary chemical structures and compound libraries strictly private on your local machine or secure deployment environment.
 - **Flexible Data Input:** Supports single-compound name search (via PubChem), direct manual SMILES entry, and automated batch file uploads (`.csv` and `.txt`).
@@ -34,7 +34,7 @@ The platform consists of six specialized, standalone tools integrated via a seam
 
 ---
 
-## 💻 Tech Stack
+## Tech Stack
 
 - **Frontend / UI:** [Streamlit](https://streamlit.io/) (with custom CSS components & sticky dual-row navigation)
 - **Cheminformatics Engine:** [RDKit](https://www.rdkit.org/)
@@ -43,7 +43,7 @@ The platform consists of six specialized, standalone tools integrated via a seam
 
 ---
 
-## ⚙️ Installation & Local Setup
+## Installation & Local Setup
 
 1. **Clone the repository:**
    ```bash
