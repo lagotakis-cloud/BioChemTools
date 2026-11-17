@@ -1,6 +1,6 @@
-# 🧬 biochemtools.tech | Enterprise Cheminformatics & In Silico Screening Suite
+# 🧬 biochemtools.tech | A Free Tool Suite for Drug Discovery
 
-**biochemtools.tech** is a modern, fast, and professional web-based cheminformatics suite designed for researchers, medicinal chemists, and students. Built with **Streamlit**, **RDKit**, **PubChemPy**, and **Pandas**, it provides robust local tools for high-throughput in silico screening, molecular property evaluation, and chemical translation.
+**biochemtools.tech** is a modern, fast, and free tool suite designed for researchers, medicinal chemists, and students. Built with **Streamlit**, **RDKit**, **PubChemPy**, and **Pandas**, it provides robust local tools for high-throughput in silico screening, molecular property evaluation, and chemical translation.
 
 Designed with a **"First-Line Triage"** philosophy, the platform enables secure, local, and lightning-fast preliminary screening of chemical libraries without the security risks or latency of external third-party servers.
 
@@ -14,7 +14,7 @@ The platform consists of six specialized, standalone tools integrated via a seam
    * Evaluates core physicochemical properties (Molecular Weight, LogP, HBD, HBA) to assess oral bioavailability and drug-likeness.
 2. **`2_veber.py` (Veber's Rules & TPSA Screener)**
    * Analyzes molecular flexibility (Rotatable Bonds) and polar surface area (TPSA) alongside Blood-Brain Barrier (BBB) potential.
-3. **`3_admet.py` (Enterprise ADMET & Toxicity Screener)**
+3. **`3_admet.py` (Simple ADMET & Toxicity Screener)**
    * Computes aqueous solubility (ESOL/LogS), screens for Pan Assay Interference Compounds (PAINS), detects toxic structural alerts via SMARTS, and profiles hepatic CYP450 enzyme inhibition.
 4. **`4_ghose.py` (Ghose Filter Checker)**
    * Validates molecules against comprehensive statistical ranges for MW, LogP, Molar Refractivity, and total atom count derived from clinical drug databases.
