@@ -1,4 +1,5 @@
 import streamlit as st
+from components import render_navbar
 
 st.set_page_config(
     page_title="biochemtools.tech | Enterprise Cheminformatics",
@@ -6,70 +7,64 @@ st.set_page_config(
     layout="wide",
 )
 
-from components import render_navbar
-
 render_navbar()
 
 # --- HERO SECTION ---
 st.title("🧬 biochemtools.tech")
 st.markdown(
-    "### Η σύγχρονη, γρήγορη και επαγγελματική σουίτα εργαλείων Cheminformatics"
-    " για In Silico Screening και Ανάλυση Μορίων."
+    "### The modern, fast, and professional Cheminformatics tool suite"
+    " for In Silico Screening and Molecular Analysis."
 )
 st.markdown("---")
 
 
-# --- GRID NAVIGATION ΜΕ ΤΑ 7 ΕΡΓΑΛΕΙΑ ---
-st.subheader("🛠️ Διαθέσιμα Εργαλεία Σουίτας")
+# --- GRID NAVIGATION WITH THE 6 TOOLS ---
+st.subheader("🛠️ Available Suite Tools")
 
-c1, c2, c3 = st.columns(3)
+c1, c2 = st.columns(2)
 
 with c1:
-  st.markdown("#### 1. Lipinski's Rule of 5")
-  st.markdown("Έλεγχος κανόνων φαρμακευτικότητας και φυσικοχημικών ιδιοτήτων.")
-  st.page_link("pages/1_lipinski.py", label="Άνοιγμα Lipinski", icon="💊")
+    st.markdown("#### 1. Lipinski's Rule of 5")
+    st.markdown("Evaluate drug-likeness and core physicochemical properties.")
+    st.page_link("pages/1_lipinski.py", label="Open Lipinski", icon="💊")
 
-  st.markdown("#### 4. Ghose Filter")
-  st.markdown("Αξιολόγηση βάσει MW, LogP, βαρέων ατόμων και Molar Refractivity.")
-  st.page_link("pages/4_ghose.py", label="Άνοιγμα Ghose", icon="🧪")
+    st.markdown("#### 3. Enterprise ADMET")
+    st.markdown(
+        "Advanced ADMET screening, ESOL, PAINS, CYP450, and toxicity alerts."
+    )
+    st.page_link("pages/3_admet.py", label="Open ADMET", icon="🛡️")
 
-  st.markdown("#### 7. File Converter")
-  st.markdown(
-      "Universal μετατροπή μορφών αρχείων αναφορών (CSV ⇄ TXT ⇄ Excel)."
-  )
-  st.page_link("pages/7_file_converter.py", label="Άνοιγμα Converter", icon="📁")
+    st.markdown("#### 5. QED Evaluator")
+    st.markdown(
+        "Calculate quantitative estimate of drug-likeness (0 to 1 score)."
+    )
+    st.page_link("pages/5_qed.py", label="Open QED", icon="📈")
 
 with c2:
-  st.markdown("#### 2. Veber's Rules")
-  st.markdown(
-      "Ανάλυση ευελιξίας δεσμών και πολικής επιφάνειας (TPSA) για"
-      " βιοδιαθεσιμότητα."
-  )
-  st.page_link("pages/2_veber.py", label="Άνοιγμα Veber", icon="📐")
+    st.markdown("#### 2. Veber's Rules")
+    st.markdown(
+        "Analyze molecular flexibility and polar surface area (TPSA) for"
+        " bioavailability."
+    )
+    st.page_link("pages/2_veber.py", label="Open Veber", icon="📐")
 
-  st.markdown("#### 5. QED Evaluator")
-  st.markdown(
-      "Υπολογισμός ποσοτικού δείκτη ελκυστικότητας (0 έως 1) για φάρμακα."
-  )
-  st.page_link("pages/5_qed.py", label="Άνοιγμα QED", icon="📈")
+    st.markdown("#### 4. Ghose Filter")
+    st.markdown(
+        "Filter based on MW, LogP, heavy atoms, and Molar Refractivity."
+    )
+    st.page_link("pages/4_ghose.py", label="Open Ghose", icon="🧪")
 
-with c3:
-  st.markdown("#### 3. Enterprise ADMET")
-  st.markdown(
-      "Προηγμένος έλεγχος ADMET, ESOL, PAINS, CYP450 και τοξικότητας."
-  )
-  st.page_link("pages/3_admet.py", label="Άνοιγμα ADMET", icon="🛡️")
-
-  st.markdown("#### 6. Name ⇄ SMILES")
-  st.markdown(
-      "Αμφίδρομη μαζική μετατροπή ονομάτων (PubChem) σε SMILES και αντίστροφα."
-  )
-  st.page_link(
-      "pages/6_names_to_smiles.py", label="Άνοιγμα Name ⇄ SMILES", icon="🔤"
-  )
+    st.markdown("#### 6. Name ⇄ SMILES")
+    st.markdown(
+        "Bidirectional batch conversion between compound names (PubChem) and"
+        " SMILES."
+    )
+    st.page_link(
+        "pages/6_names_to_smiles.py", label="Open Name ⇄ SMILES", icon="🔤"
+    )
 
 st.markdown("---")
 st.markdown(
-    "💡 *Tip: Μπορείτε ανά πάσα στιγμή να πλοηγηθείτε σε οποιοδήποτε εργαλείο"
-    " χρησιμοποιώντας το μενού (sidebar) στα αριστερά.*"
+    "💡 *Tip: You can navigate to any tool at any time using the sidebar menu on"
+    " the left.*"
 )
