@@ -6,16 +6,16 @@ from rdkit.Chem import Crippen, Descriptors
 import streamlit as st
 from components import render_navbar
 
-render_navbar()
-
 # --- TITLE & DESCRIPTION ---
 st.set_page_config(
     page_title="Lipinski Rule of 5 | BiochemTools",
     page_icon="assets/organic.png",
     layout="wide",
 )
-st.title("Lipinski Rule of 5 Checker")
 
+render_navbar()
+
+st.title("Lipinski Rule of 5 Checker")
 st.markdown("---")
 
 # --- INITIALIZE SESSION STATE ---
@@ -31,7 +31,7 @@ def get_smiles_from_pubchem(compound_name):
       return compounds[0].canonical_smiles
     else:
       return None
-  except Exception as e:
+  except Exception:
     return None
 
 
