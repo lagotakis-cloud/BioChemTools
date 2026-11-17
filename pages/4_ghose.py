@@ -23,7 +23,7 @@ if "ghose_results" not in st.session_state:
   st.session_state.ghose_results = None
 
 
-# --- ΣΥΝΑΡΤΗΣΕΙΣ ---
+# --- FUNCTIONS ---
 def get_smiles_from_pubchem(compound_name):
   try:
     compounds = pcp.get_compounds(compound_name.strip(), "name")
@@ -36,9 +36,9 @@ def get_smiles_from_pubchem(compound_name):
 
 def highlight_ghose(row):
   styles = [""] * len(row)
-  name_idx = row.index.get_loc("Όνομα / SMILES")
+  name_idx = row.index.get_loc("Name / SMILES")
 
-  if "Passed" in str(row["Κατάσταση"]):
+  if "Passed" in str(row["Status"]):
     styles[name_idx] = (
         "background-color: #d4edda; color: #155724; font-weight: bold;"
     )
@@ -47,16 +47,16 @@ def highlight_ghose(row):
         "background-color: #f8d7da; color: #721c24; font-weight: bold;"
     )
 
-  if not (160 <= row["Μοριακό Βάρος (MW)"] <= 480):
-    styles[row.index.get_loc("Μοριακό Βάρος (MW)")] = (
+  if not (160 <= row["Molecular Weight (MW)"] <= 480):
+    styles[row.index.get_loc("Molecular Weight (MW)")] = (
         "background-color: #f8d7da; color: #721c24;"
     )
   if not (-0.4 <= row["LogP"] <= 5.6):
     styles[row.index.get_loc("LogP")] = (
         "background-color: #f8d7da; color: #721c24;"
     )
-  if not (20 <= row["Βαριά Άτομα"] <= 70):
-    styles[row.index.get_loc("Βαριά Άτομα")] = (
+  if not (20 <= row["Heavy Atoms"] <= 70):
+    styles[row.index.get_loc("Heavy Atoms")] = (
         "background-color: #f8d7da; color: #721c24;"
     )
   if not (40 <= row["Molar Refractivity"] <= 130):
@@ -68,24 +68,24 @@ def highlight_ghose(row):
 
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 1: ΕΙΣΑΓΩΓΗ ΔΕΔΟΜΕΝΩΝ
+# 1. DATA INPUT
 # ==========================================
 if st.session_state.ghose_results is None:
   input_option = st.radio(
-      "Επιλέξτε τρόπο εισαγωγής μορίων:",
+      "Choose data input:",
       (
-          "Δοκιμή με έτοιμα ονόματα",
-          "Πληκτρολόγηση ονομάτων",
-          "Πληκτρολόγηση SMILES",
-          "Ανέβασμα αρχείου ονομάτων",
-          "Ανέβασμα αρχείου SMILES",
+          "Test with pre-existing names",
+          "Type Compound Names",
+          "Type SMILES Strings",
+          "Upload Compound Names File",
+          "Upload SMILES Strings File",
       ),
   )
 
   input_data_list = []
   is_smiles_mode = False
 
-  if input_option == "Δοκιμή με έτοιμα ονόματα":
+  if input_option == "Test with pre-existing names":
     input_data_list = [
         "Aspirin",
         "Cyclosporin A",
@@ -93,21 +93,21 @@ if st.session_state.ghose_results is None:
         "Atorvastatin",
         "Omeprazole",
     ]
-    st.write("Δοκιμαστική λίστα:", ", ".join(input_data_list))
+    st.write("Test List:", ", ".join(input_data_list))
 
-  elif input_option == "Πληκτρολόγηση ονομάτων":
+  elif input_option == "Type Compound Names":
     user_input = st.text_area(
-        "Γράψτε τα ονόματα (ένα ανά γραμμή):",
+        "Type Compound Names (one per line):",
         value="Aspirin\nSertraline\nAtorvastatin",
     )
     input_data_list = [
         name.strip() for name in user_input.split("\n") if name.strip()
     ]
 
-  elif input_option == "Πληκτρολόγηση SMILES":
+  elif input_option == "Type SMILES Strings":
     is_smiles_mode = True
     user_input = st.text_area(
-        "Γράψτε τα SMILES strings (ένα ανά γραμμή):",
+        "Type SMILES strings (one per line):",
         value=(
             "CC(=O)OC1=CC=CC=C1C(=O)O\nCC(C)CC1=CC=CC(=C1)C(C)C(=O)O\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C"
         ),
@@ -116,9 +116,9 @@ if st.session_state.ghose_results is None:
         smi.strip() for smi in user_input.split("\n") if smi.strip()
     ]
 
-  elif input_option == "Ανέβασμα αρχείου ονομάτων":
+  elif input_option == "Upload Compound Names File":
     uploaded_file = st.file_uploader(
-        "Ανεβάστε αρχείο (CSV με στήλη 'Name' ή TXT με ένα όνομα ανά γραμμή):",
+        "Upload File (CSV with 'Name' column or TXT with one name per line):",
         type=["csv", "txt"],
     )
     if uploaded_file is not None:
@@ -138,15 +138,15 @@ if st.session_state.ghose_results is None:
           ]
 
         st.success(
-            f"Επιτυχής φόρτωση {len(input_data_list)} εγγραφών από το αρχείο!"
+            f"Successfully uploaded {len(input_data_list)} compound names!"
         )
       except Exception as e:
-        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+        st.error(f"Error reading file: {e}")
 
-  else:  # Ανέβασμα αρχείου SMILES
+  else:  # Upload SMILES Strings File
     is_smiles_mode = True
     uploaded_file = st.file_uploader(
-        "Ανεβάστε αρχείο (CSV με στήλη 'SMILES' ή TXT με ένα SMILES ανά γραμμή):",
+        "Upload File (CSV with 'SMILES' column or TXT with one SMILES per line):",
         type=["csv", "txt"],
     )
     if uploaded_file is not None:
@@ -168,14 +168,14 @@ if st.session_state.ghose_results is None:
           ]
 
         st.success(
-            f"Επιτυχής φόρτωση {len(input_data_list)} SMILES από το αρχείο!"
+            f"Successfully uploaded {len(input_data_list)} SMILES strings!"
         )
       except Exception as e:
-        st.error(f"Σφάλμα κατά την ανάγνωση του αρχείου: {e}")
+        st.error(f"Error reading file: {e}")
 
-  if st.button("Αναζήτηση & Υπολογισμός", type="primary"):
+  if st.button("Search & Calculate", type="primary"):
     if not input_data_list:
-      st.warning("Παρακαλώ εισάγετε ή ανεβάστε δεδομένα.")
+      st.warning("Please enter or upload data.")
     else:
       results = []
       progress_bar = st.progress(0)
@@ -190,8 +190,8 @@ if st.session_state.ghose_results is None:
 
         if smi is None:
           st.warning(
-              f"Δεν βρέθηκε η ένωση / SMILES: **{display_name}** στο PubChem."
-              " Παράλειψη."
+              f"Compound Name / SMILES: **{display_name}** not found in PubChem."
+              " Compound excluded."
           )
           progress_bar.progress((i + 1) / len(input_data_list))
           continue
@@ -199,7 +199,7 @@ if st.session_state.ghose_results is None:
         mol = Chem.MolFromSmiles(smi)
         if mol is None:
           st.warning(
-              f"Μη έγκυρο SMILES για την ένωση: **{display_name}**. Παράλειψη."
+              f"Invalid SMILES string: **{display_name}**. Compound excluded."
           )
           progress_bar.progress((i + 1) / len(input_data_list))
           continue
@@ -222,14 +222,14 @@ if st.session_state.ghose_results is None:
         status = "Passed (Drug-like)" if violations == 0 else "Failed"
 
         results.append({
-            "Όνομα / SMILES": display_name,
+            "Name / SMILES": display_name,
             "SMILES": smi,
-            "Μοριακό Βάρος (MW)": round(mw, 2),
+            "Molecular Weight (MW)": round(mw, 2),
             "LogP": round(logp, 2),
-            "Βαριά Άτομα": heavy_atoms,
+            "Heavy Atoms": heavy_atoms,
             "Molar Refractivity": round(mr, 2),
-            "Παραβάσεις": violations,
-            "Κατάσταση": status,
+            "Violations": violations,
+            "Status": status,
         })
 
         progress_bar.progress((i + 1) / len(input_data_list))
@@ -239,31 +239,31 @@ if st.session_state.ghose_results is None:
         st.rerun()
 
 # ==========================================
-# ΚΑΤΑΣΤΑΣΗ 2: ΑΠΟΤΕΛΕΣΜΑΤΑ & ΛΗΨΗ
+# 2. RESULTS & DOWNLOAD
 # ==========================================
 else:
-  if st.button("🔄 Νέα Αναζήτηση / Αλλαγή Δεδομένων"):
+  if st.button("🔄 New Search / Change Data"):
     st.session_state.ghose_results = None
     st.rerun()
 
   df_results = pd.DataFrame(st.session_state.ghose_results)
 
-  st.subheader("📊 Αποτελέσματα Ανάλυσης")
+  st.subheader("📊 Analysis Results")
 
   df_display = df_results.drop(columns=["SMILES"])
 
   styled_df = df_display.style.apply(highlight_ghose, axis=1).format({
-      "Μοριακό Βάρος (MW)": "{:.2f}",
+      "Molecular Weight (MW)": "{:.2f}",
       "LogP": "{:.2f}",
       "Molar Refractivity": "{:.2f}",
   })
 
   st.dataframe(styled_df, use_container_width=True)
 
-  # --- ΠΟΛΛΑΠΛΕΣ ΕΠΙΛΟΓΕΣ ΛΗΨΗΣ ΑΡΧΕΙΟΥ ---
-  st.markdown("### 📥 Λήψη Αποτελεσμάτων")
+  # --- DOWNLOAD OPTIONS ---
+  st.markdown("### 📥 Download Results")
   file_format = st.radio(
-      "Επιλέξτε μορφή αρχείου για λήψη:",
+      "Choose file format for download:",
       options=["CSV (.csv)", "Text (.txt)", "Excel (.xlsx)"],
       horizontal=True,
       key="download_format_radio_ghose",
@@ -290,7 +290,7 @@ else:
     )
 
   st.download_button(
-      label=f"⬇️ Λήψη αρχείου ({file_name})",
+      label=f"⬇️ Download file ({file_name})",
       data=file_data,
       file_name=file_name,
       mime=mime_type,
@@ -300,7 +300,7 @@ else:
 st.markdown("""
 ### What is the Ghose Filter?
 
-The **Ghose Filter** is a foundational knowledge-based physicochemical filter introduced by Arup K. Ghose and colleagues to characterize the drug-like chemical space of small molecules. 
+The **Ghose Filter** is a foundational knowledge-based physicochemical filter introduced by Arup K. Ghose and colleagues to characterize the drug-like chemical space of small molecules.
 
 While rules like Lipinski's focus primarily on molecular weight, lipophilicity, and hydrogen bonding, the Ghose filter broadens the evaluation framework by examining additional structural descriptors derived from comprehensive statistical analyses of commercial drug databases.
 
@@ -340,7 +340,7 @@ The resulting reports allow researchers to:
 
 ### Scientific Interpretation and Limitations
 
-The Ghose filter serves as an essential preliminary screening tool in early-stage drug discovery to filter out outlier molecules that deviate significantly from the typical physicochemical profiles of successful oral drugs. 
+The Ghose filter serves as an essential preliminary screening tool in early-stage drug discovery to filter out outlier molecules that deviate significantly from the typical physicochemical profiles of successful oral drugs.
 
 However, like other heuristic filters, it should not be treated as an absolute predictor of biological activity or clinical success. Compounds failing one or more criteria may still possess therapeutic potential depending on specific target classes and mechanisms of action.
 
